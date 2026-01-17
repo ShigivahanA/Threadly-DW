@@ -1,0 +1,247 @@
+[
+  {
+    "_id": "696b0c2c782fa421a2025331",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768623111/wardrobe/6968b9d43cb617477c377dbe/es8lqk6wcmqpxtd6anfz.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/es8lqk6wcmqpxtd6anfz",
+    "category": "shirt",
+    "size": "M",
+    "colors": [
+      "#13131f",
+      "#353444"
+    ],
+    "brand": "Snitch",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": false,
+    "tags": [],
+    "notes": "Snitch, Coimbatore",
+    "createdAt": "2026-01-17T04:12:28.992Z",
+    "updatedAt": "2026-01-17T04:12:28.992Z",
+    "__v": 0
+  },
+  {
+    "_id": "696b0c5d782fa421a2025333",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768623156/wardrobe/6968b9d43cb617477c377dbe/mmm8mhwojwh3mx9ifbab.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/mmm8mhwojwh3mx9ifbab",
+    "category": "tshirt",
+    "size": "M",
+    "colors": [
+      "#252724",
+      "#ede9e0"
+    ],
+    "brand": "Max",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": false,
+    "tags": [],
+    "notes": "Max, Thoothukudi",
+    "createdAt": "2026-01-17T04:13:17.724Z",
+    "updatedAt": "2026-01-17T04:13:17.724Z",
+    "__v": 0
+  },
+  {
+    "_id": "696b0c8f782fa421a2025335",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768623204/wardrobe/6968b9d43cb617477c377dbe/lecjc2rovuibsztfw84c.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/lecjc2rovuibsztfw84c",
+    "category": "pant",
+    "size": "M",
+    "colors": [
+      "#464451"
+    ],
+    "brand": "Max",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": false,
+    "tags": [],
+    "notes": "Max, Tuticorin",
+    "createdAt": "2026-01-17T04:14:07.689Z",
+    "updatedAt": "2026-01-17T04:14:07.689Z",
+    "__v": 0
+  },
+  {
+    "_id": "696b0cc1782fa421a2025337",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768623257/wardrobe/6968b9d43cb617477c377dbe/cpl2fmifeuffavcguxsu.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/cpl2fmifeuffavcguxsu",
+    "category": "pant",
+    "size": "M",
+    "colors": [
+      "#e4e3de"
+    ],
+    "brand": "Max",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": false,
+    "tags": [],
+    "notes": "Max, Tuticorin",
+    "createdAt": "2026-01-17T04:14:57.248Z",
+    "updatedAt": "2026-01-17T04:14:57.248Z",
+    "__v": 0
+  },
+  {
+    "_id": "696b130b782fa421a202534d",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768624887/wardrobe/6968b9d43cb617477c377dbe/lydkgnk3nzx5bv4jj2it.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/lydkgnk3nzx5bv4jj2it",
+    "category": "pant",
+    "size": "M",
+    "colors": [
+      "#7e7963"
+    ],
+    "brand": "f",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": false,
+    "tags": [],
+    "notes": "",
+    "createdAt": "2026-01-17T04:41:47.707Z",
+    "updatedAt": "2026-01-17T04:41:47.707Z",
+    "__v": 0
+  },
+  {
+    "_id": "696b1329782fa421a202534f",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768624913/wardrobe/6968b9d43cb617477c377dbe/i54precqlakmn5xr41t1.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/i54precqlakmn5xr41t1",
+    "category": "pant",
+    "size": "M",
+    "colors": [
+      "#9f9ea4"
+    ],
+    "brand": "a",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": false,
+    "tags": [],
+    "notes": "",
+    "createdAt": "2026-01-17T04:42:17.042Z",
+    "updatedAt": "2026-01-17T04:42:17.042Z",
+    "__v": 0
+  },
+  {
+    "_id": "696b1348782fa421a2025351",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768624944/wardrobe/6968b9d43cb617477c377dbe/zjn2f2prwwcagjejloex.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/zjn2f2prwwcagjejloex",
+    "category": "jeans",
+    "size": "M",
+    "colors": [
+      "#8e9ead"
+    ],
+    "brand": "a",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": false,
+    "tags": [],
+    "notes": "",
+    "createdAt": "2026-01-17T04:42:48.545Z",
+    "updatedAt": "2026-01-17T04:42:48.545Z",
+    "__v": 0
+  },
+  {
+    "_id": "696b1364782fa421a2025353",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768624977/wardrobe/6968b9d43cb617477c377dbe/j0tfnbgmfywakoco2clu.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/j0tfnbgmfywakoco2clu",
+    "category": "tshirt",
+    "size": "M",
+    "colors": [
+      "#7a8a5b",
+      "#121524"
+    ],
+    "brand": "a",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": false,
+    "tags": [],
+    "notes": "",
+    "createdAt": "2026-01-17T04:43:16.302Z",
+    "updatedAt": "2026-01-17T04:43:16.302Z",
+    "__v": 0
+  },
+  {
+    "_id": "696b137b782fa421a2025355",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768625002/wardrobe/6968b9d43cb617477c377dbe/shhwp62oivsquc6xjcp6.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/shhwp62oivsquc6xjcp6",
+    "category": "tshirt",
+    "size": "M",
+    "colors": [
+      "#aec4d9",
+      "#e8e7ed"
+    ],
+    "brand": "a",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": false,
+    "tags": [],
+    "notes": "",
+    "createdAt": "2026-01-17T04:43:39.687Z",
+    "updatedAt": "2026-01-17T05:12:04.970Z",
+    "__v": 0
+  },
+  {
+    "_id": "696b1393782fa421a2025357",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768625024/wardrobe/6968b9d43cb617477c377dbe/dhzokd6uq3ikvhsfkvup.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/dhzokd6uq3ikvhsfkvup",
+    "category": "tshirt",
+    "size": "M",
+    "colors": [
+      "#f6f5f1",
+      "#22422b"
+    ],
+    "brand": "a",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": true,
+    "tags": [],
+    "notes": "",
+    "createdAt": "2026-01-17T04:44:03.518Z",
+    "updatedAt": "2026-01-17T05:32:35.220Z",
+    "__v": 0
+  },
+  {
+    "_id": "696b1939782fa421a2025382",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768626465/wardrobe/6968b9d43cb617477c377dbe/u5fd8dd2gcerzxzrtzi5.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/u5fd8dd2gcerzxzrtzi5",
+    "category": "shoes",
+    "size": "11",
+    "colors": [
+      "#044ebb"
+    ],
+    "brand": "Nike",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": true,
+    "tags": [],
+    "notes": "",
+    "createdAt": "2026-01-17T05:08:09.819Z",
+    "updatedAt": "2026-01-17T05:32:36.651Z",
+    "__v": 0
+  },
+  {
+    "_id": "696b1965782fa421a2025384",
+    "userId": "6968b9d43cb617477c377dbe",
+    "imageUrl": "https://res.cloudinary.com/dld9rlmxb/image/upload/v1768626496/wardrobe/6968b9d43cb617477c377dbe/p7ftjdm1bx2rhtwpkobw.jpg",
+    "imagePublicId": "wardrobe/6968b9d43cb617477c377dbe/p7ftjdm1bx2rhtwpkobw",
+    "category": "shoes",
+    "size": "11",
+    "colors": [
+      "#e4e5e7"
+    ],
+    "brand": "Nike",
+    "occasion": "other",
+    "season": "all",
+    "isFavorite": false,
+    "tags": [],
+    "notes": "",
+    "createdAt": "2026-01-17T05:08:53.847Z",
+    "updatedAt": "2026-01-17T05:08:53.847Z",
+    "__v": 0
+  }
+]
