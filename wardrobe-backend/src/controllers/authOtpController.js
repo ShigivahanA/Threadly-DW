@@ -9,7 +9,7 @@ import {
 } from '../utils/jwt.js'
 import { successResponse } from '../utils/response.js'
 import { sendEmail } from '../utils/mailer.js'
-import { otpEmail } from '../utils/emailTemplates.js'
+import { otpEmail,loginAlertEmail  } from '../utils/emailTemplates.js'
 import crypto from 'crypto'
 import { UAParser } from 'ua-parser-js'
 
@@ -112,6 +112,20 @@ const refreshToken = generateRefreshToken({
 })
 
 await user.save()
+
+const alertMail = loginAlertEmail({
+  device: `${ua.browser.name || 'Browser'} · ${ua.os.name || 'OS'}`,
+  ip: req.ip
+})
+
+sendEmail({
+  to: user.email,
+  subject: alertMail.subject,
+  html: alertMail.html,
+  text: alertMail.text
+}).catch(err => {
+  console.error('OTP login alert email failed:', err)
+})
 
 
   successResponse(res, {
