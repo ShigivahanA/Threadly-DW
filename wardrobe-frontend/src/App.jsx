@@ -18,7 +18,7 @@ import OutfitFolders from './pages/OutfitFolders'
 import WardrobeItem from './pages/WardrobeItem'
 import Upload from './pages/Upload'
 import OutfitDetail from './pages/OutfitDetail'
-import Terms from './pages/terms'
+import Terms from './pages/Terms'
 import Contact from './pages/Contact'
 import Profile from './pages/Profile'
 
