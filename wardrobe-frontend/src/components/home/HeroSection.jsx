@@ -58,7 +58,11 @@ const HeroSection = () => {
         </p>
 
         {/* Actions */}
-        <div className="flex justify-center gap-4 pt-6">
+        <div className="flex flex-col
+  sm:flex-row
+  justify-center
+  gap-3 sm:gap-4
+  pt-6">
           {isAuthenticated ? (
             <>
               <Link

@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import PairingCard from './PairingCard'
 
-const CARD_WIDTH = 220
-const GAP = 24
-const STEP = CARD_WIDTH + GAP
+const CARD_WIDTH = 'clamp(160px, 55vw, 220px)'
+const GAP = 'clamp(12px, 4vw, 24px)'
 
 const PairingRow = ({ title, items, onChange }) => {
   const [index, setIndex] = useState(0)
+  const [touchStartX, setTouchStartX] = useState(null)
+const [touchEndX, setTouchEndX] = useState(null)
+
+const SWIPE_THRESHOLD = 50 // px
 
   // ✅ Start centered with variety
   useEffect(() => {
@@ -41,6 +44,30 @@ const PairingRow = ({ title, items, onChange }) => {
   const next = () =>
     setIndex((i) => (i === items.length - 1 ? 0 : i + 1))
 
+  const onTouchStart = (e) => {
+  setTouchEndX(null)
+  setTouchStartX(e.targetTouches[0].clientX)
+}
+
+const onTouchMove = (e) => {
+  setTouchEndX(e.targetTouches[0].clientX)
+}
+
+const onTouchEnd = () => {
+  if (touchStartX === null || touchEndX === null) return
+
+  const distance = touchStartX - touchEndX
+
+  if (Math.abs(distance) < SWIPE_THRESHOLD) return
+
+  if (distance > 0) {
+    next() // swipe left → next
+  } else {
+    prev() // swipe right → previous
+  }
+}
+
+
   return (
     <section className="space-y-5">
       <p className="text-sm uppercase tracking-widest text-neutral-500 text-center">
@@ -55,8 +82,11 @@ const PairingRow = ({ title, items, onChange }) => {
             ease-[cubic-bezier(.22,.61,.36,1)]
             will-change-transform
           "
+          onTouchStart={onTouchStart}
+  onTouchMove={onTouchMove}
+  onTouchEnd={onTouchEnd}
           style={{
-            transform: `translateX(calc(50% - ${CARD_WIDTH / 2}px - ${index * STEP}px))`
+            transform: `translateX(calc(50% - ${index * 100}%))`
           }}
         >
           {items.map((item, i) => (
@@ -83,7 +113,7 @@ const PairingRow = ({ title, items, onChange }) => {
             bg-white/80 
             backdrop-blur
             border border-neutral-200 dark:border-neutral-700 dark:bg-neutral-500
-            transition hover:scale-105
+            transition hover:scale-105 hidden sm:block
           "
         >
           <ChevronLeft size={18} />
@@ -98,7 +128,7 @@ const PairingRow = ({ title, items, onChange }) => {
             bg-white/80 
             backdrop-blur
             border border-neutral-200 dark:border-neutral-700 dark:bg-neutral-500
-            transition hover:scale-105
+            transition hover:scale-105 hidden sm:block
           "
         >
           <ChevronRight size={18} />
