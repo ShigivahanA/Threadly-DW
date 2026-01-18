@@ -102,6 +102,25 @@ const logout = async () => {
   }
 }
 
+const forgotPassword = async (email) => {
+  if (!email) {
+    throw new Error('Email is required')
+  }
+
+  await apiClient.post('/auth/password/forgot', { email })
+}
+
+const resetPassword = async ({ token, password }) => {
+  if (!token || !password) {
+    throw new Error('Token and password are required')
+  }
+
+  await apiClient.post('/auth/password/reset', {
+    token,
+    newPassword: password
+  })
+}
+
 
 export default {
   register,
@@ -110,5 +129,7 @@ export default {
   refresh,
   me,
   requestOtp,
-  verifyOtp
+  verifyOtp,
+  forgotPassword,
+  resetPassword,
 }

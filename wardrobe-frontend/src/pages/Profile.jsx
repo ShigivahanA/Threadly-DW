@@ -11,6 +11,13 @@ const Profile = () => {
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [pwStep, setPwStep] = useState('idle') 
+  const [pwLoading, setPwLoading] = useState(false)
+// idle | otp | change
+  const [otp, setOtp] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   const [name, setName] = useState('')
   const [sessions, setSessions] = useState([])
@@ -249,6 +256,213 @@ const Profile = () => {
             Export my data
           </button>
         </Section>
+
+        <Section>
+  <SectionTitle>Security</SectionTitle>
+
+  <div
+    className="
+      max-w-xl
+      rounded-2xl
+      border border-neutral-200 dark:border-neutral-800
+      bg-white dark:bg-neutral-900
+      p-6
+      space-y-5
+    "
+  >
+    {/* STEP 1 — Idle */}
+    {pwStep === 'idle' && (
+      <>
+        <p className="text-sm text-neutral-500">
+          Change your password securely using email verification.
+        </p>
+
+        <button
+          onClick={async () => {
+            setPwLoading(true)
+            try {
+              await profileService.requestPasswordOtp()
+              setPwStep('otp')
+              showToast('OTP sent to your email', 'success')
+            } catch {
+              showToast('Failed to send OTP', 'error')
+            } finally {
+              setPwLoading(false)
+            }
+          }}
+          disabled={pwLoading}
+          className="
+            inline-flex items-center gap-2
+            rounded-full
+            px-5 py-2.5
+            bg-black text-white
+            dark:bg-white dark:text-black
+            text-sm font-medium
+            transition
+            hover:scale-[1.02]
+            disabled:opacity-50
+          "
+        >
+          {pwLoading ? <Spinner /> : 'Change password'}
+        </button>
+      </>
+    )}
+
+    {/* STEP 2 — OTP */}
+    {pwStep === 'otp' && (
+      <>
+        <p className="text-sm text-neutral-500">
+          Enter the 6-digit code sent to your email.
+        </p>
+
+        <Field label="One-time password">
+          <input
+            value={otp}
+            onChange={e => setOtp(e.target.value)}
+            className={inputClass}
+            maxLength={6}
+          />
+        </Field>
+
+        <div className="flex gap-4">
+          <button
+            onClick={() => setPwStep('change')}
+            disabled={otp.length !== 6}
+            className="
+              rounded-full
+              px-5 py-2.5
+              bg-black text-white
+              dark:bg-white dark:text-black
+              text-sm font-medium
+              disabled:opacity-40
+            "
+          >
+            Verify code
+          </button>
+
+          <button
+            onClick={() => {
+              setPwStep('idle')
+              setOtp('')
+            }}
+            className="
+              text-sm
+              underline underline-offset-4
+              text-neutral-600 dark:text-neutral-400
+            "
+          >
+            Cancel
+          </button>
+        </div>
+      </>
+    )}
+
+    {/* STEP 3 — Change */}
+    {pwStep === 'change' && (
+      <>
+        <p className="text-sm text-neutral-500">
+          Confirm your current password and set a new one.
+        </p>
+
+        <div className="space-y-4">
+          <Field label="Current password">
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={e => setCurrentPassword(e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="New password">
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Confirm new password">
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+        </div>
+
+        <div className="flex gap-4 pt-2">
+          <button
+            onClick={async () => {
+              if (!currentPassword || !password || !otp) {
+                showToast('All fields are required', 'error')
+                return
+              }
+
+              if (password !== confirmPassword) {
+                showToast('Passwords do not match', 'error')
+                return
+              }
+
+              setPwLoading(true)
+              try {
+                await profileService.changePassword({
+                  currentPassword,
+                  newPassword: password,
+                  otp
+                })
+
+                showToast(
+                  'Password updated. Please sign in again.',
+                  'success'
+                )
+                await logout()
+              } catch (e) {
+                showToast(e.message || 'Update failed', 'error')
+              } finally {
+                setPwLoading(false)
+              }
+            }}
+            disabled={pwLoading}
+            className="
+              inline-flex items-center gap-2
+              rounded-full
+              px-5 py-2.5
+              bg-black text-white
+              dark:bg-white dark:text-black
+              text-sm font-medium
+              transition
+              hover:scale-[1.02]
+              disabled:opacity-50
+            "
+          >
+            {pwLoading ? <Spinner /> : 'Update password'}
+          </button>
+
+          <button
+            onClick={() => {
+              setPwStep('idle')
+              setOtp('')
+              setPassword('')
+              setConfirmPassword('')
+              setCurrentPassword('')
+            }}
+            className="
+              text-sm
+              underline underline-offset-4
+              text-neutral-600 dark:text-neutral-400
+            "
+          >
+            Cancel
+          </button>
+        </div>
+      </>
+    )}
+  </div>
+</Section>
+
 
         {/* Danger */}
         <Section danger>

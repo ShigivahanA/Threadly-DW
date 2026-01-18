@@ -129,10 +129,16 @@ if (accessToken) {
   }
 
   // Reset password → force logout
-  const resetPassword = async ({ token, password }) => {
-    await authService.resetPassword({ token, password })
-    await logout()
-  }
+const resetPassword = async ({ token, password }) => {
+  await authService.resetPassword({ token, password })
+
+  // Silent local cleanup (NO API calls)
+  setUser(null)
+  setSessionId(null)
+  setAccessToken(null)
+  localStorage.removeItem('refresh_token')
+}
+
 
   /**
    * Manual refresh (optional)
@@ -164,6 +170,16 @@ const logout = async () => {
   }
 }
 
+const requestPasswordOtp = async () => {
+  await profileService.requestPasswordOtp()
+}
+
+const changePassword = async (payload) => {
+  await profileService.changePassword(payload)
+  await logout()
+}
+
+
 
    if (loading) {
     return <AppLoader />
@@ -186,7 +202,9 @@ const logout = async () => {
         forgotPassword,
         resetPassword,
 
-        refreshSession
+        refreshSession,
+        requestPasswordOtp,
+        changePassword
       }}
     >
       {children}

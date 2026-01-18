@@ -6,6 +6,7 @@ import { sendEmail } from '../utils/mailer.js'
 import { resetPasswordEmail } from '../utils/emailTemplates.js'
 import { successResponse } from '../utils/response.js'
 import { hashPassword } from '../utils/password.js'
+import { passwordResetSuccessEmail } from '../utils/emailTemplates.js'
 
 /**
  * POST /api/auth/password/forgot
@@ -56,6 +57,9 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 /**
  * POST /api/auth/password/reset
  */
+/**
+ * POST /api/auth/password/reset
+ */
 export const resetPassword = asyncHandler(async (req, res) => {
   const { token, newPassword } = req.body
 
@@ -63,24 +67,46 @@ export const resetPassword = asyncHandler(async (req, res) => {
     throw new AppError('Token and new password required', 400)
   }
 
+  if (newPassword.length < 8) {
+    throw new AppError('Password must be at least 8 characters', 400)
+  }
+
   const hashedToken = hashResetToken(token)
 
   const user = await User.findOne({
-    'passwordReset.token': hashedToken
-  }).select('+refreshToken')
+    'passwordReset.token': hashedToken,
+    'passwordReset.expiresAt': { $gt: new Date() }
+  }).select('+password')
 
-  if (!user || user.passwordReset.expiresAt < new Date()) {
+  if (!user) {
     throw new AppError('Invalid or expired reset token', 401)
   }
 
-  // update password
-  user.password = await hashPassword(newPassword)
-
-  // invalidate sessions
-  user.refreshToken = null
+  // 🔐 Immediately invalidate reset token (single-use)
   user.passwordReset = undefined
 
+  // 🔑 Update password
+  user.password = await hashPassword(newPassword)
+
+  // 🔥 Invalidate all sessions
+  user.sessions = []
+
+  // 🧾 Audit log
+  user.auditLogs?.push({
+    action: 'PASSWORD_RESET',
+    ip: req.ip,
+    device: req.headers['user-agent']
+  })
+
   await user.save()
+
+  const email = passwordResetSuccessEmail()
+await sendEmail({
+  to: user.email,
+  subject: email.subject,
+  html: email.html,
+  text: email.text
+})
 
   successResponse(res, {
     message: 'Password reset successful'

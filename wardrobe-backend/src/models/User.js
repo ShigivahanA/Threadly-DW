@@ -25,6 +25,23 @@ const sessionSchema = new mongoose.Schema(
   { _id: true }
 )
 
+const auditLogSchema = new mongoose.Schema(
+  {
+    action: {
+      type: String,
+      required: true
+    },
+    ip: String,
+    device: String,
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  },
+  { _id: false }
+)
+
+
 const userSchema = new mongoose.Schema(
   {
     email: {
@@ -52,6 +69,10 @@ const userSchema = new mongoose.Schema(
     },
 
     sessions: [sessionSchema],
+    auditLogs: {
+      type: [auditLogSchema],
+      default: []
+    },
 
     passwordReset: {
       token: { type: String },

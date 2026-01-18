@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import Field from '../components/ui/Field'
 import useToast from '../hooks/useToast'
 import { useAuth } from '../context/AuthContext'
+import Spinner from '../components/ui/Spinner'
+
 
 const ForgotPassword = () => {
   const { forgotPassword } = useAuth()
@@ -18,11 +20,11 @@ const ForgotPassword = () => {
     try {
       await forgotPassword(email)
       showToast(
-        'If the email exists, a reset link has been sent',
+        'A reset link has been sent',
         'success'
       )
     } catch {
-      // silent by design
+      // intentionally silent (security)
       showToast(
         'If the email exists, a reset link has been sent',
         'success'
@@ -33,15 +35,17 @@ const ForgotPassword = () => {
   }
 
   return (
-    <div className="flex justify-center px-4 pt-12">
+    <div className="min-h-[70vh] flex items-center justify-center px-4 pt-16 pb-32">
       <div className="w-full max-w-sm">
+
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-            Forgot password
+        <div className="mb-10 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
+            Reset your password
           </h1>
-          <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-            We’ll send you a reset link
+          <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+            Enter the email associated with your account and we’ll send you a secure
+            link to reset your password.
           </p>
         </div>
 
@@ -49,17 +53,16 @@ const ForgotPassword = () => {
         <form
           onSubmit={handleSubmit}
           className="
-            space-y-5
             rounded-2xl
-            border
-            border-neutral-200 dark:border-neutral-700
+            border border-neutral-200 dark:border-neutral-700
             bg-white dark:bg-neutral-800
-            p-6
+            p-6 sm:p-7
             shadow-sm
+            space-y-6
           "
         >
           <Field
-            label="Email"
+            label="Email address"
             type="email"
             name="email"
             placeholder="you@example.com"
@@ -76,24 +79,32 @@ const ForgotPassword = () => {
               rounded-xl
               bg-black dark:bg-white
               py-2.5
-              text-white dark:text-black
+              text-sm
               font-medium
+              text-white dark:text-black
               transition
               hover:opacity-90
-              disabled:opacity-50
+              focus:outline-none focus:ring-2 focus:ring-black/20 dark:focus:ring-white/20
+              disabled:opacity-50 disabled:cursor-not-allowed
             "
           >
-            {loading ? 'Sending…' : 'Send reset link'}
+            {loading ? <Spinner /> : 'Send reset link'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-neutral-600 dark:text-neutral-400">
-          Back to{' '}
+        {/* Footer */}
+        <p className="mt-8 text-center text-sm text-neutral-600 dark:text-neutral-400">
+          Remembered your password?{' '}
           <Link
             to="/login"
-            className="font-medium text-neutral-900 dark:text-neutral-100 hover:underline"
+            className="
+              font-medium
+              text-neutral-900 dark:text-neutral-100
+              hover:underline
+              underline-offset-4
+            "
           >
-            Login
+            Back to login
           </Link>
         </p>
       </div>

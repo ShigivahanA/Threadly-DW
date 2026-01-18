@@ -7,3 +7,8 @@ export const generateOtp = () => {
 export const hashOtp = (otp) => {
   return crypto.createHash('sha256').update(otp).digest('hex')
 }
+
+export const compareOtp = (plainOtp, hashedOtp) => {
+  const hashedInput = hashOtp(plainOtp)
+  return hashedInput === hashedOtp
+}

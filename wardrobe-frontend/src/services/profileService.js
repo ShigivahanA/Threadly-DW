@@ -22,6 +22,20 @@ const terminateSession = async (sessionId) => {
   await apiClient.delete(`/profile/sessions/${sessionId}`)
 }
 
+const requestPasswordOtp = async () => {
+  await apiClient.post('/profile/password/otp')
+}
+
+const changePassword = async ({ currentPassword, newPassword, otp }) => {
+  await apiClient.post('/profile/password/change', {
+    currentPassword,
+    newPassword,
+    otp
+  })
+}
+
+
+
 
 export default {
   getProfile,
@@ -29,4 +43,6 @@ export default {
   exportData,
   deleteAccount,
   terminateSession,
+  requestPasswordOtp,
+  changePassword
 }

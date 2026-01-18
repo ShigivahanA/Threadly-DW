@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import Field from '../components/ui/Field'
 import useToast from '../hooks/useToast'
 import { useAuth } from '../context/AuthContext'
+import Spinner from '../components/ui/Spinner'
 
 const ResetPassword = () => {
   const { resetPassword } = useAuth()
@@ -52,41 +53,43 @@ const ResetPassword = () => {
 
   if (!token) {
     return (
-      <div className="pt-20 text-center text-sm text-neutral-600">
-        Invalid reset link
+      <div className="min-h-[60vh] flex items-center justify-center text-sm text-neutral-600 dark:text-neutral-400">
+        Invalid or expired reset link
       </div>
     )
   }
 
   return (
-    <div className="flex justify-center px-4 pt-12">
+    <div className="min-h-[70vh] flex items-center justify-center pt-12 px-4 pb-32">
       <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-            Reset password
+
+        {/* Header */}
+        <div className="mb-10 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
+            Set a new password
           </h1>
-          <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-            Choose a new password
+          <p className="mt-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+            Choose a strong password you haven’t used before.
           </p>
         </div>
 
+        {/* Card */}
         <form
           onSubmit={handleSubmit}
           className="
-            space-y-5
             rounded-2xl
-            border
-            border-neutral-200 dark:border-neutral-700
+            border border-neutral-200 dark:border-neutral-700
             bg-white dark:bg-neutral-800
-            p-6
+            p-6 sm:p-7
             shadow-sm
+            space-y-6
           "
         >
           <Field
             label="New password"
             type="password"
             name="password"
-            placeholder="New password"
+            placeholder="Enter new password"
             value={form.password}
             onChange={handleChange}
             disabled={loading}
@@ -96,7 +99,7 @@ const ResetPassword = () => {
             label="Confirm password"
             type="password"
             name="confirmPassword"
-            placeholder="Confirm password"
+            placeholder="Re-enter new password"
             value={form.confirmPassword}
             onChange={handleChange}
             disabled={loading}
@@ -110,14 +113,16 @@ const ResetPassword = () => {
               rounded-xl
               bg-black dark:bg-white
               py-2.5
-              text-white dark:text-black
+              text-sm
               font-medium
+              text-white dark:text-black
               transition
               hover:opacity-90
-              disabled:opacity-50
+              focus:outline-none focus:ring-2 focus:ring-black/20 dark:focus:ring-white/20
+              disabled:opacity-50 disabled:cursor-not-allowed
             "
           >
-            {loading ? 'Updating…' : 'Update password'}
+            {loading ? <Spinner /> : 'Update password'}
           </button>
         </form>
       </div>

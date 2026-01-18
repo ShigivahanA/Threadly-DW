@@ -5,7 +5,9 @@ import {
   updateProfile,
   exportProfileData,
   deleteAccount,
-  terminateSession 
+  terminateSession,
+  requestPasswordOtp,
+  changePassword
 } from '../controllers/profileController.js'
 
 const router = express.Router()
@@ -16,6 +18,8 @@ router.get('/', getProfile)
 router.patch('/', updateProfile)
 router.post('/export', exportProfileData)
 router.delete('/', deleteAccount)
+router.post('/password/otp', requestPasswordOtp)
+router.post('/password/change', changePassword)
 router.delete('/sessions/:sessionId', terminateSession)
 
 

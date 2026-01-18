@@ -195,6 +195,19 @@ const Login = () => {
                 onChange={handleChange}
                 disabled={loading}
               />
+              <div className="mt-2 text-right">
+    <Link
+      to="/forgot-password"
+      className="
+        text-xs
+        text-neutral-600 dark:text-neutral-400
+        hover:text-neutral-900 dark:hover:text-neutral-200
+        transition
+      "
+    >
+      Forgot password?
+    </Link>
+  </div>
               <ActionButton loading={loading} onClick={handlePasswordLogin}>
                 Login
               </ActionButton>

@@ -7,8 +7,10 @@ import {
   generateRefreshToken,
   verifyRefreshToken
 } from '../utils/jwt.js'
+import { welcomeEmail,loginAlertEmail } from '../utils/emailTemplates.js'
 import { successResponse } from '../utils/response.js'
 import crypto from 'crypto'
+import { sendEmail } from '../utils/mailer.js'
 import { UAParser } from 'ua-parser-js'
 
 
@@ -59,6 +61,18 @@ user.sessions.push({
 })
 
 await user.save()
+
+const welcomeMail = welcomeEmail(user.name)
+
+sendEmail({
+  to: user.email,
+  subject: welcomeMail.subject,
+  html: welcomeMail.html,
+  text: welcomeMail.text
+}).catch(err => {
+  console.error('Welcome email failed:', err)
+})
+
 
 
   successResponse(res, {
@@ -148,6 +162,18 @@ user.sessions.push({
 })
 
 await user.save()
+
+const alertMail = loginAlertEmail({
+  device,
+  ip: req.ip
+})
+
+await sendEmail({
+  to: user.email,
+  subject: alertMail.subject,
+  html: alertMail.html,
+  text: alertMail.text
+})
 
   successResponse(res, {
     message: 'Login successful',

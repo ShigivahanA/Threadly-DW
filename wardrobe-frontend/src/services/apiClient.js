@@ -60,13 +60,13 @@ const request = async (url, options = {}, retry = true) => {
     return data
   }
 
-  // Unauthorized → try refresh once
-  if (response.status === 401 && retry) {
-    const refreshed = await refreshAccessToken()
-    if (refreshed) {
-      return request(url, options, false)
-    }
-  }
+  // // Unauthorized → try refresh once
+  // if (response.status === 401 && retry) {
+  //   const refreshed = await refreshAccessToken()
+  //   if (refreshed) {
+  //     return request(url, options, false)
+  //   }
+  // }
 
   // Other errors
   const errorData = await response.json().catch(() => ({}))
@@ -79,53 +79,53 @@ const request = async (url, options = {}, retry = true) => {
    Refresh token flow
 ====================== */
 
-const refreshAccessToken = async () => {
-  if (isRefreshing) {
-    return refreshPromise
-  }
+// const refreshAccessToken = async () => {
+//   if (isRefreshing) {
+//     return refreshPromise
+//   }
 
-  const refreshToken = getRefreshToken()
-  if (!refreshToken) {
-    forceLogout()
-    return false
-  }
+//   const refreshToken = getRefreshToken()
+//   if (!refreshToken) {
+//     forceLogout()
+//     return false
+//   }
 
-  isRefreshing = true
+//   isRefreshing = true
 
-  refreshPromise = (async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken })
-      })
+//   refreshPromise = (async () => {
+//     try {
+//       const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ refreshToken })
+//       })
 
-      if (!response.ok) {
-        throw new Error('Refresh failed')
-      }
+//       if (!response.ok) {
+//         throw new Error('Refresh failed')
+//       }
 
-      const json = await response.json()
-      const payload = json.data || json
+//       const json = await response.json()
+//       const payload = json.data || json
 
-      if (!payload.accessToken || !payload.refreshToken) {
-        throw new Error('Invalid refresh payload')
-      }
+//       if (!payload.accessToken || !payload.refreshToken) {
+//         throw new Error('Invalid refresh payload')
+//       }
 
-      setAccessToken(payload.accessToken)
-      setRefreshToken(payload.refreshToken)
+//       setAccessToken(payload.accessToken)
+//       setRefreshToken(payload.refreshToken)
 
-      return true
-    } catch {
-      forceLogout()
-      return false
-    } finally {
-      isRefreshing = false
-      refreshPromise = null
-    }
-  })()
+//       return true
+//     } catch {
+//       forceLogout()
+//       return false
+//     } finally {
+//       isRefreshing = false
+//       refreshPromise = null
+//     }
+//   })()
 
-  return refreshPromise
-}
+//   return refreshPromise
+// }
 
 /* ======================
    Logout helper
