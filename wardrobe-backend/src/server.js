@@ -21,12 +21,32 @@ app.set('trust proxy', 1)
 ====================== */
 app.use(helmet())
 
-app.use(
-  cors({
-    origin: true,
-    credentials: true
-  })
-)
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://threadly-dw-frontend.vercel.app'
+]
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin) return callback(null, true)
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+
+    return callback(new Error('Not allowed by CORS'))
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}
+
+app.use(cors(corsOptions))
+
+// ✅ Preflight must use SAME options
+app.options(/.*/, cors(corsOptions))
+
 
 app.use(express.json({ limit: '10kb' }))
 app.use(generalLimiter)
