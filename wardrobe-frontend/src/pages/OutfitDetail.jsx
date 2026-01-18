@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import outfitService from '../services/outfitService'
+import Spinner from '../components/ui/Spinner'
+import OutfitDetailSkeleton from '../components/outfit/OutfitDetailSkeleton'
 
 const OutfitDetail = () => {
   const { id } = useParams()
@@ -14,17 +16,13 @@ const OutfitDetail = () => {
       .finally(() => setLoading(false))
   }, [id])
 
-  if (loading) {
-    return (
-      <div className="py-20 text-center text-sm text-neutral-500">
-        Loading outfit…
-      </div>
-    )
-  }
+ if (loading) {
+  return <OutfitDetailSkeleton />
+}
 
   if (!outfit) {
     return (
-      <div className="py-20 text-center text-sm text-neutral-500">
+      <div className="py-20 text-center text-sm text-neutral-500 dark:text-neutral-400">
         Outfit not found
       </div>
     )
@@ -48,7 +46,7 @@ const OutfitDetail = () => {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-10 space-y-8">
-      <h1 className="text-xl font-semibold text-center">
+      <h1 className="text-xl font-semibold text-center dark:text-neutral-500">
         Outfit Details
       </h1>
 
@@ -96,7 +94,7 @@ const OutfitDetail = () => {
           disabled:opacity-50
         "
       >
-        {updating ? 'Updating…' : 'Mark as worn today'}
+        {updating ? <Spinner /> : 'Mark as worn today'}
       </button>
     </div>
   )

@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import OutfitItemCard from '../components/outfit/OutfitItemCard'
 import outfitService from '../services/outfitService'
+import Spinner from '../components/ui/Spinner'
 
 const Outfit = () => {
   const navigate = useNavigate()
@@ -14,7 +15,7 @@ const Outfit = () => {
 
   if (!state?.top || !state?.bottom || !state?.shoe) {
     return (
-      <div className="py-20 text-center text-sm text-neutral-500">
+      <div className="py-20 text-center text-sm text-neutral-500 dark:text-neutral-400">
         No outfit selected
       </div>
     )
@@ -51,7 +52,7 @@ const Outfit = () => {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 space-y-10">
-      <h1 className="text-2xl font-semibold text-center">
+      <h1 className="text-2xl font-semibold text-center dark:text-neutral-500">
         Your Outfit
       </h1>
 
@@ -76,7 +77,7 @@ const Outfit = () => {
             className="
               w-full rounded-xl border p-3 text-sm
               bg-white dark:bg-neutral-900
-              border-neutral-200 dark:border-neutral-700
+              border-neutral-200 dark:border-neutral-700 dark:text-white
             "
           />
 
@@ -87,8 +88,8 @@ const Outfit = () => {
             rows={3}
             className="
               w-full rounded-xl border p-3 text-sm
-              bg-white dark:bg-neutral-900
-              border-neutral-200 dark:border-neutral-700
+              bg-white dark:bg-neutral-900 
+              border-neutral-200 dark:border-neutral-700 dark:text-white
             "
           />
 
@@ -107,7 +108,7 @@ const Outfit = () => {
               disabled:opacity-50
             "
           >
-            {saving ? 'Saving…' : 'Save outfit'}
+            {saving ? <Spinner /> : 'Save outfit'}
           </button>
         </div>
       )}
@@ -117,7 +118,7 @@ const Outfit = () => {
         {!showSave && (
           <button
             onClick={() => setShowSave(true)}
-            className="text-sm underline"
+            className="text-sm underline text-neutral-500 dark:text-neutral-400"
           >
             Save this outfit
           </button>
@@ -125,7 +126,7 @@ const Outfit = () => {
 
         <button
           onClick={() => navigate('/pairing')}
-          className="text-sm underline text-neutral-500"
+          className="text-sm underline text-neutral-500  dark:text-neutral-400"
         >
           Choose again
         </button>

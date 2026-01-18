@@ -80,7 +80,7 @@ const PairingRow = ({ title, items, onChange }) => {
             absolute left-2 top-1/2 -translate-y-1/2
             z-10
             rounded-full p-2
-            bg-white/80 dark:bg-neutral-900/80
+            bg-white/80 
             backdrop-blur
             border border-neutral-200 dark:border-neutral-700 dark:bg-neutral-500
             transition hover:scale-105
@@ -95,7 +95,7 @@ const PairingRow = ({ title, items, onChange }) => {
             absolute right-2 top-1/2 -translate-y-1/2
             z-10
             rounded-full p-2
-            bg-white/80 dark:bg-neutral-900/80
+            bg-white/80 
             backdrop-blur
             border border-neutral-200 dark:border-neutral-700 dark:bg-neutral-500
             transition hover:scale-105

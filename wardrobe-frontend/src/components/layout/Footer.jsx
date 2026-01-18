@@ -24,8 +24,8 @@ const Footer = () => {
           </div>
 
           <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
-            A private digital space to understand what you own,
-            reuse it intentionally, and dress without excess.
+            A private digital space designed to help you understand what you own,
+reuse it intentionally, and move away from excess.
           </p>
         </div>
 
@@ -69,7 +69,7 @@ const Footer = () => {
                 dark:hover:decoration-neutral-100
               "
             >
-              support@wardrobe.app
+              support@threadly.app
             </a>
           </div>
         </div>
@@ -87,7 +87,7 @@ const Footer = () => {
           "
         >
           <p className="text-xs text-neutral-500">
-            © {new Date().getFullYear()} Wardrobe
+            © {new Date().getFullYear()} Threadly
           </p>
 
           <p className="text-xs text-neutral-400">

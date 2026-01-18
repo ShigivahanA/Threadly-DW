@@ -1,6 +1,13 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 const ClosingSection = () => {
+  const { isAuthenticated } = useAuth()
+
+  const cta = isAuthenticated
+    ? { label: 'Continue thoughtfully', to: '/pairing' }
+    : { label: 'Begin quietly', to: '/register' }
+
   return (
     <section className="px-4">
       <div className="mx-auto max-w-4xl text-center space-y-10">
@@ -26,7 +33,7 @@ const ClosingSection = () => {
           It’s about knowing what’s enough.
         </p>
 
-        {/* Signature line */}
+        {/* Signature */}
         <p
           className="
             text-sm uppercase tracking-[0.3em]
@@ -39,7 +46,7 @@ const ClosingSection = () => {
         {/* Gentle CTA */}
         <div className="pt-6">
           <Link
-            to="/register"
+            to={cta.to}
             className="
               inline-flex items-center gap-2
               text-sm font-medium
@@ -50,7 +57,7 @@ const ClosingSection = () => {
               hover:decoration-neutral-800 dark:hover:decoration-neutral-200
             "
           >
-            Begin quietly
+            {cta.label}
           </Link>
         </div>
 
