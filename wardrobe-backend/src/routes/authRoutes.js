@@ -16,25 +16,20 @@ import auth from '../middleware/auth.js'
 const router = express.Router()
 
 const registerSchema = z.object({
-  body: z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-    name: z.string().optional()
-  })
+  email: z.string().email(),
+  password: z.string().min(6),
+  name: z.string().optional(),
 })
 
 const loginSchema = z.object({
-  body: z.object({
-    email: z.string().email(),
-    password: z.string()
-  })
+  email: z.string().email(),
+  password: z.string(),
 })
 
 const refreshSchema = z.object({
-  body: z.object({
-    refreshToken: z.string()
-  })
+  refreshToken: z.string(),
 })
+
 
 router.post(
   '/register',
