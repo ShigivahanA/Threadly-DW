@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native'
-import { useColorScheme } from 'react-native'
+import { useTheme } from '@/src/theme/ThemeProvider'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
@@ -13,8 +13,8 @@ type Props = {
 }
 
 export default function FavouriteHeader({ count, loading }: Props) {
-  const scheme = useColorScheme()
-  const colors = scheme === 'dark' ? darkColors : lightColors
+  const { theme } = useTheme()
+  const colors = theme === 'dark' ? darkColors : lightColors
   const router = useRouter()
 
   const goBack = async () => {
@@ -49,7 +49,7 @@ export default function FavouriteHeader({ count, loading }: Props) {
           styles.sub,
           {
             color: colors.textSecondary,
-            opacity: scheme === 'dark' ? 0.9 : 0.75,
+            opacity: theme === 'dark' ? 0.9 : 0.75,
           },
         ]}
       >

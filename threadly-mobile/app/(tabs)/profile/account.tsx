@@ -18,10 +18,13 @@ import { lightColors, darkColors } from '@/src/theme/colors'
 import { spacing } from '@/src/theme/spacing'
 
 import profileService from '@/src/services/profileService'
-import authService from '@/src/services/authService'
+import { logout } from '@/src/services/authService'
 import PrimaryButton from '@/src/components/auth/PrimaryButton'
 import ProfileHeader from '@/src/components/Profile/ProfileHeader'
 import { useToast } from '@/src/components/Toast/ToastProvider'
+import OtpInput from '@/src/components/auth/OtpInput'
+import SecureInput from '@/src/components/auth/SecureInput'
+import AccountSkeleton from '@/src/components/Profile/AccountSkeleton'
 
 
 
@@ -30,12 +33,20 @@ export default function AccountScreen() {
   const { theme } = useTheme()
   const colors = theme === 'dark' ? darkColors : lightColors
   const toast = useToast()
-
+  const [exporting, setExporting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [sessions, setSessions] = useState<any[]>([])
+  const [pwStep, setPwStep] = useState<'idle' | 'otp' | 'change'>('idle')
+  const [pwLoading, setPwLoading] = useState(false)
+
+  const [otp, setOtp] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
 
   /* ---------------- Load profile ---------------- */
   useEffect(() => {
@@ -50,7 +61,7 @@ export default function AccountScreen() {
         setEmail(res.email)
         setSessions(res.sessions || [])
       } catch {
-        Alert.alert('Error', 'Failed to load profile')
+        toast.show('Failed to load profile', 'error')
       } finally {
         mounted && setLoading(false)
       }
@@ -74,10 +85,21 @@ export default function AccountScreen() {
       )
       toast.show('Profile updated successfully', 'success')
     } catch {
-      Alert.alert('Error', 'Failed to update profile')
+      Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Error
+      )
+      toast.show('Failed to update profile', 'error')
     } finally {
       setSaving(false)
     }
+  }
+
+  const resetPasswordFlow = () => {
+    setPwStep('idle')
+    setOtp('')
+    setCurrentPassword('')
+    setPassword('')
+    setConfirmPassword('')
   }
 
   /* ---------------- Terminate session ---------------- */
@@ -86,12 +108,13 @@ export default function AccountScreen() {
       await profileService.terminateSession(id)
       setSessions(prev => prev.filter(s => s.id !== id))
     } catch {
-      Alert.alert('Error', 'Failed to terminate session')
+      toast.show('Failed to terminate session', 'error')
     }
   }
 
   /* ---------------- Delete account ---------------- */
   const deleteAccount = async () => {
+    toast.show('Deleting account...', 'info')
     Alert.alert(
       'Delete account',
       'This action is permanent.',
@@ -102,19 +125,48 @@ export default function AccountScreen() {
           style: 'destructive',
           onPress: async () => {
             await profileService.deleteAccount()
-            await authService.logout()
+            await logout()
           },
         },
       ]
     )
   }
 
+  const handleExportData = async () => {
+    if (exporting) return
+
+    setExporting(true)
+    toast.show('Preparing your data export…', 'info')
+
+    try {
+      await profileService.exportData()
+
+      toast.show(
+        'Your data export has started. You’ll receive an email shortly.',
+        'success'
+      )
+    } catch {
+      toast.show('Failed to export data', 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+
+  const handleLogout = async () => {
+  toast.show('Signing out...', 'info')
+
+  try {
+    await logout()
+    router.replace('/(auth)/login')
+  } catch {
+    toast.show('Logout failed', 'error')
+  }
+}
+
+
   if (loading) {
-    return (
-      <SafeAreaView
-        style={{ flex: 1, backgroundColor: colors.background }}
-      />
-    )
+    return <AccountSkeleton />
   }
 
   return (
@@ -209,20 +261,268 @@ export default function AccountScreen() {
         </Card>
 
         <Card colors={colors} title="Your data">
-          <Pressable onPress={profileService.exportData}>
-            <Text style={{ color: colors.textPrimary }}>
-              Export my data
-            </Text>
-          </Pressable>
-        </Card>
+  <Pressable
+    onPress={handleExportData}
+    disabled={exporting}
+    style={({ pressed }) => [
+      styles.exportRow,
+      {
+        backgroundColor: colors.surface,
+        borderColor: colors.border,
+        opacity: exporting ? 0.6 : pressed ? 0.85 : 1,
+      },
+    ]}
+  >
+    <View style={styles.exportLeft}>
+      <Ionicons
+        name="download-outline"
+        size={18}
+        color={colors.textPrimary}
+      />
+      <Text
+        style={[
+          styles.exportText,
+          { color: colors.textPrimary },
+        ]}
+      >
+        Export my data
+      </Text>
+    </View>
+
+    {exporting ? (
+      <Text
+        style={{
+          fontSize: 12,
+          color: colors.textSecondary,
+        }}
+      >
+        Preparing…
+      </Text>
+    ) : (
+      <Ionicons
+        name="chevron-forward"
+        size={16}
+        color={colors.textSecondary}
+      />
+    )}
+  </Pressable>
+</Card>
+
+
+        <Card colors={colors} title="Security">
+  {/* STEP 1 — Idle */}
+  {pwStep === 'idle' && (
+    <>
+      <Text style={{ color: colors.textSecondary }}>
+        Change your password securely using email verification.
+      </Text>
+
+      <PrimaryButton
+        title="Change password"
+        loading={pwLoading}
+        onPress={async () => {
+          setPwLoading(true)
+          try {
+            await profileService.requestPasswordOtp()
+            setPwStep('otp')
+            toast.show('OTP sent to your email', 'success')
+          } catch {
+            toast.show('Failed to send OTP', 'error')
+          } finally {
+            setPwLoading(false)
+          }
+        }}
+      />
+    </>
+  )}
+
+  {/* STEP 2 — OTP */}
+  {pwStep === 'otp' && (
+    <>
+      <Text style={{ color: colors.textSecondary }}>
+        Enter the 6-digit code sent to your email.
+      </Text>
+
+      <Field label="One-time password" colors={colors}>
+        <OtpInput
+            value={otp}
+            onChange={setOtp}
+            onComplete={() => {}}
+            error={false}
+          />
+      </Field>
+
+      <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
+  <PrimaryButton
+    title="Verify code"
+    onPress={() => setPwStep('change')}
+    disabled={otp.length !== 6}
+  />
+
+  <Pressable
+    onPress={resetPasswordFlow}
+    hitSlop={8}
+    style={{ alignSelf: 'center' }}
+  >
+    <Text
+      style={{
+        color: colors.textSecondary,
+        textDecorationLine: 'underline',
+        fontSize: 14,
+      }}
+    >
+      Cancel
+    </Text>
+  </Pressable>
+</View>
+    </>
+  )}
+
+  {/* STEP 3 — Change */}
+  {pwStep === 'change' && (
+    <>
+      <Text style={{ color: colors.textSecondary }}>
+        Confirm your current password and set a new one.
+      </Text>
+
+      <Field label="Current password" colors={colors}>
+        <SecureInput
+    value={currentPassword}
+    onChangeText={setCurrentPassword}
+  />
+      </Field>
+
+      <Field label="New password" colors={colors}>
+         <SecureInput
+            value={password}
+            onChangeText={setPassword}
+          />
+      </Field>
+
+      <Field label="Confirm new password" colors={colors}>
+        <SecureInput
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+      </Field>
+
+      <View style={{ gap: spacing.md }}>
+  <PrimaryButton
+    title="Update password"
+    loading={pwLoading}
+    onPress={async () => {
+      if (
+        !currentPassword ||
+        !password ||
+        !confirmPassword ||
+        !otp
+      ) {
+        toast.show('All fields are required', 'error')
+        return
+      }
+
+      if (password !== confirmPassword) {
+        toast.show('Passwords do not match', 'error')
+        return
+      }
+
+      setPwLoading(true)
+      try {
+        await profileService.changePassword({
+          currentPassword,
+          newPassword: password,
+          otp,
+        })
+
+        toast.show(
+          'Password updated. Please sign in again.',
+          'success'
+        )
+
+        await logout()
+      } catch (e: any) {
+        toast.show(
+          e?.message || 'Password update failed',
+          'error'
+        )
+      } finally {
+        setPwLoading(false)
+      }
+    }}
+  />
+
+  <Pressable
+    onPress={resetPasswordFlow}
+    hitSlop={8}
+    style={{ alignSelf: 'center' }}
+  >
+    <Text
+      style={{
+        color: colors.textSecondary,
+        textDecorationLine: 'underline',
+        fontSize: 14,
+      }}
+    >
+      Cancel
+    </Text>
+  </Pressable>
+</View>
+    </>
+  )}
+</Card>
 
         <Card colors={colors} danger title="Danger zone">
-          <Pressable onPress={deleteAccount}>
-            <Text style={{ color: '#ff4d4f' }}>
-              Delete account
-            </Text>
-          </Pressable>
-        </Card>
+  <View style={{ gap: spacing.md }}>
+
+    {/* Logout (neutral) */}
+    <Pressable
+      onPress={handleLogout}
+      hitSlop={8}
+      style={[
+        styles.dangerRow,
+        {
+          borderColor: colors.border,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.dangerText,
+          { color: colors.textPrimary },
+        ]}
+      >
+        Log out
+      </Text>
+    </Pressable>
+
+    {/* Delete account (destructive) */}
+    <Pressable
+      onPress={deleteAccount}
+      hitSlop={8}
+      style={[
+        styles.dangerRow,
+        {
+          backgroundColor:
+            theme === 'dark'
+              ? 'rgba(239,68,68,0.12)'
+              : 'rgba(220,38,38,0.08)',
+          borderColor: colors.danger,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          styles.dangerText,
+          { color: colors.danger },
+        ]}
+      >
+        Delete account
+      </Text>
+    </Pressable>
+
+  </View>
+</Card>
+
       </ScrollView>
     </SafeAreaView>
   )
@@ -330,4 +630,37 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  dangerRow: {
+  height: 52,
+  borderRadius: 12,
+  borderWidth: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+dangerText: {
+  fontSize: 15,
+  fontWeight: '500',
+},
+exportRow: {
+  height: 52,
+  borderRadius: 12,
+  borderWidth: 1,
+  paddingHorizontal: spacing.md,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
+
+exportLeft: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: spacing.sm,
+},
+
+exportText: {
+  fontSize: 15,
+  fontWeight: '500',
+},
+
 })

@@ -1,21 +1,13 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { useTheme } from '@/src/theme/ThemeProvider'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 
-import { useTheme } from '@/src/theme/ThemeProvider'
 import { lightColors, darkColors } from '@/src/theme/colors'
 import { spacing } from '@/src/theme/spacing'
 
-type Props = {
-  loading?: boolean
-  title?: string
-}
-
-export default function ProfileHeader({
-  loading,
-  title = 'Account',
-}: Props) {
+export default function ContactHeader() {
   const { theme } = useTheme()
   const colors = theme === 'dark' ? darkColors : lightColors
   const router = useRouter()
@@ -26,18 +18,9 @@ export default function ProfileHeader({
   }
 
   return (
-    <View
-      style={[
-        styles.wrap,
-        { backgroundColor: colors.background },
-      ]}
-    >
+    <View style={styles.wrap}>
       <View style={styles.row}>
-        <Pressable
-          onPress={goBack}
-          hitSlop={10}
-          style={styles.back}
-        >
+        <Pressable onPress={goBack} hitSlop={8} style={styles.back}>
           <Ionicons
             name="chevron-back"
             size={22}
@@ -45,14 +28,8 @@ export default function ProfileHeader({
           />
         </Pressable>
 
-        <Text
-          style={[
-            styles.title,
-            { color: colors.textPrimary },
-          ]}
-          numberOfLines={1}
-        >
-          {title}
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          Contact
         </Text>
       </View>
     </View>
@@ -63,25 +40,21 @@ const styles = StyleSheet.create({
   wrap: {
     gap: 4,
   },
-
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
-
   back: {
-    padding: 4, // 👈 IMPORTANT: no forced height
+    padding: 4,
   },
-
   title: {
     fontSize: 22,
     fontWeight: '600',
     letterSpacing: -0.3,
   },
-
   sub: {
     fontSize: 13,
-    marginLeft: 26, // aligns under text, not arrow
+    marginLeft: 26,
   },
 })

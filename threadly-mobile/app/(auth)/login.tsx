@@ -1,33 +1,36 @@
 import { View, Text, StyleSheet, Alert } from 'react-native'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useColorScheme } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Link, router } from 'expo-router'
-
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
   Easing,
 } from 'react-native-reanimated'
-
 import { lightColors, darkColors } from '../../src/theme/colors'
 import { spacing } from '../../src/theme/spacing'
 import { typography } from '../../src/theme/typography'
-
 import Field from '../../src/components/auth/Field'
 import OtpInput from '../../src/components/auth/OtpInput'
 import PrimaryButton from '../../src/components/auth/PrimaryButton'
-
+import { useToast } from '@/src/components/Toast/ToastProvider'
 import {
   login,
   requestOtp,
   verifyOtp,
 } from '../../src/services/authService'
+import SecureInput from '@/src/components/auth/SecureInput'
 
 const TAB_WIDTH = 140
 
 export default function Login() {
+  const toast = useToast()
+  const fadeHeader = useSharedValue(0)
+  const fadeTabs = useSharedValue(0)
+  const fadeForm = useSharedValue(0)
+
   const scheme = useColorScheme()
   const colors = scheme === 'dark' ? darkColors : lightColors
 
@@ -68,16 +71,19 @@ export default function Login() {
   ====================== */
   const handlePasswordLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Missing details', 'Enter email and password')
+      toast.show('All fields are required', 'error')
       return
     }
 
     try {
       setLoading(true)
       await login({ email, password })
+      toast.show('Logged in successfully', 'success')
+
+      // ✅ Auto-login success
       router.replace('/(tabs)/wardrobe')
     } catch (e: any) {
-      Alert.alert('Login failed', e.message || 'Invalid credentials')
+      toast.show(e.message || 'Invalid credentials', 'error')
     } finally {
       setLoading(false)
     }
@@ -88,7 +94,7 @@ export default function Login() {
   ====================== */
   const handleOtpRequest = async () => {
     if (!email) {
-      Alert.alert('Missing email', 'Enter your email')
+      toast.show('Email is required', 'error')
       return
     }
 
@@ -97,7 +103,7 @@ export default function Login() {
       await requestOtp(email)
       setStep('verify')
     } catch {
-      Alert.alert('Failed', 'Could not send OTP')
+      toast.show('Failed to send OTP', 'error')
     } finally {
       setLoading(false)
     }
@@ -109,6 +115,9 @@ export default function Login() {
     try {
       setLoading(true)
       await verifyOtp({ email, otp })
+      toast.show('Logged in successfully', 'success')
+
+      // ✅ Auto-login success
       router.replace('/(tabs)/wardrobe')
       return true
     } catch {
@@ -119,6 +128,27 @@ export default function Login() {
     }
   }
 
+  useEffect(() => {
+    fadeHeader.value = withTiming(1, { duration: 400 })
+    fadeTabs.value = withTiming(1, { duration: 450 })
+    fadeForm.value = withTiming(1, { duration: 500 })
+  }, [])
+
+  const headerStyle = useAnimatedStyle(() => ({
+    opacity: fadeHeader.value,
+    transform: [{ translateY: (1 - fadeHeader.value) * 8 }],
+  }))
+
+  const tabsStyle = useAnimatedStyle(() => ({
+    opacity: fadeTabs.value,
+    transform: [{ translateY: (1 - fadeTabs.value) * 8 }],
+  }))
+
+  const formStyle = useAnimatedStyle(() => ({
+    opacity: fadeForm.value,
+    transform: [{ translateY: (1 - fadeForm.value) * 8 }],
+  }))
+
   return (
     <SafeAreaView
       edges={['top']}
@@ -127,20 +157,22 @@ export default function Login() {
       <View style={styles.screen}>
 
         {/* Header */}
-        <View style={styles.header}>
+        <Animated.View style={[styles.header, headerStyle]}>
           <Text style={[styles.title, { color: colors.textPrimary }]}>
             Welcome back
           </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Login to your wardrobe
           </Text>
-        </View>
+        </Animated.View>
+
 
         {/* Tabs */}
-        <View
+        <Animated.View
           style={[
             styles.tabs,
             { backgroundColor: colors.surface, borderColor: colors.border },
+            tabsStyle,
           ]}
         >
           <Animated.View
@@ -174,10 +206,10 @@ export default function Login() {
           >
             OTP
           </Text>
-        </View>
+        </Animated.View>
 
         {/* Form */}
-        <View style={styles.form}>
+        <Animated.View style={[styles.form, formStyle]}>
           <Field
             label="Email"
             value={email}
@@ -188,13 +220,23 @@ export default function Login() {
           />
 
           {mode === 'password' && (
-            <Field
-              label="Password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          )}
+            <View style={{ marginBottom: spacing.lg }}>
+              <Text
+                style={{
+                  marginBottom: spacing.xs,
+                  color: colors.textSecondary,
+                  ...typography.label,
+                }}
+              >
+                Password
+              </Text>
+
+              <SecureInput
+                value={password}
+                onChangeText={setPassword}
+              />
+            </View>
+                    )}
 
           {mode === 'otp' && step === 'verify' && (
             <OtpInput
@@ -236,7 +278,7 @@ export default function Login() {
                   : () => {}
             }
           />
-        </View>
+        </Animated.View>
 
         {/* Footer */}
         <Link href="/(auth)/register" style={styles.footer}>

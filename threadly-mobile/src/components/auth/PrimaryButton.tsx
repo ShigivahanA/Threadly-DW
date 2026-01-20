@@ -1,4 +1,10 @@
-import { Pressable, Text, StyleSheet, ActivityIndicator } from 'react-native'
+import {
+  Pressable,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  View,
+} from 'react-native'
 import { useColorScheme } from 'react-native'
 import { lightColors, darkColors } from '../../theme/colors'
 import { spacing } from '../../theme/spacing'
@@ -18,6 +24,7 @@ export default function PrimaryButton({
 }: Props) {
   const scheme = useColorScheme()
   const colors = scheme === 'dark' ? darkColors : lightColors
+  const textColor = scheme === 'dark' ? '#000' : '#fff'
 
   return (
     <Pressable
@@ -31,21 +38,21 @@ export default function PrimaryButton({
         },
       ]}
     >
-      {loading ? (
-  <ActivityIndicator
-    color={scheme === 'dark' ? '#000' : '#fff'}
-  />
-) : (
-  <Text
-    style={[
-      styles.text,
-      { color: scheme === 'dark' ? '#000' : '#fff' }
-    ]}
-  >
-    {title}
-  </Text>
-)}
+      {/* Invisible text to lock width */}
+      <Text style={[styles.text, { color: textColor, opacity: 0 }]}>
+        {title}
+      </Text>
 
+      {/* Actual content */}
+      <View style={styles.overlay}>
+        {loading ? (
+          <ActivityIndicator color={textColor} />
+        ) : (
+          <Text style={[styles.text, { color: textColor }]}>
+            {title}
+          </Text>
+        )}
+      </View>
     </Pressable>
   )
 }
@@ -57,9 +64,15 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
- text: {
-  fontSize: 16,
-  fontWeight: '600',
-},
+  overlay: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  text: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
 })

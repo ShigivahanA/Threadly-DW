@@ -17,7 +17,6 @@ import { getUploadSignature, uploadToCloudinary } from '../../src/services/uploa
 import wardrobeService from '../../src/services/wardrobeService'
 import type { WardrobeCategory,WardrobeSeason,WardrobeOccasion } from '../../src/services/wardrobeService'
 import ImageStage from '@/src/components/upload/ImageStage'
-import ColorPickerOverlay from '@/src/components/upload/ColorPickerOverlay'
 import { useTheme } from '@/src/theme/ThemeProvider'
 type UploadMetaDraft = {
   category: WardrobeCategory | null
@@ -207,21 +206,6 @@ export default function UploadScreen() {
                 .springify()
                 .damping(14)}
             >
-              {/* 🎨 Color picker */}
-              <ColorPickerOverlay
-                imageUri={uploaded.url}
-                colors={meta.colors}
-                onAdd={(color) =>
-                  setMeta({ ...meta, colors: [...meta.colors, color] })
-                }
-                onRemove={(color) =>
-                  setMeta({
-                    ...meta,
-                    colors: meta.colors.filter((c) => c !== color),
-                  })
-                }
-              />
-
               {/* Metadata */}
               <View style={[styles.card, { borderColor: colors.border }]}>
                 <MetadataForm meta={meta} setMeta={setMeta} />

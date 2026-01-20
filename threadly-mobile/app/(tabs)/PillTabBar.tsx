@@ -68,9 +68,9 @@ export function PillTabBar({ state, navigation, theme }: any) {
   /* ---------------------------
      Colors
   ---------------------------- */
-  const barBg = dark ? '#2a2a2a' : '#000'
-  const pillBg = dark ? '#3a3a3a' : '#fff'
-  const activeColor = dark ? '#fff' : '#000'
+  const barBg = dark ? '#cecece' : '#000'
+  const pillBg = dark ? '#ffffff' : '#fff'
+  const activeColor = dark ? '#000000' : '#000'
   const inactiveColor = 'rgba(255,255,255,0.6)'
 
   return (

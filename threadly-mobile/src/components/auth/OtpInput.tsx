@@ -1,5 +1,5 @@
-import { View, TextInput, StyleSheet } from 'react-native'
-import { useRef, useEffect } from 'react'
+import { View, TextInput, StyleSheet, useColorScheme } from 'react-native'
+import { useRef, useEffect, useState } from 'react'
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -7,6 +7,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
+
+import { lightColors, darkColors } from '../../theme/colors'
 
 type Props = {
   value: string
@@ -23,8 +25,12 @@ export default function OtpInput({
   disabled,
   error,
 }: Props) {
+  const scheme = useColorScheme()
+  const colors = scheme === 'dark' ? darkColors : lightColors
+
   const inputs = useRef<TextInput[]>([])
   const shake = useSharedValue(0)
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
 
   /* ======================
      Auto submit
@@ -60,38 +66,61 @@ export default function OtpInput({
 
   return (
     <Animated.View style={[styles.row, animatedStyle]}>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <TextInput
-          key={i}
-          ref={(el) => {
-            if (el) inputs.current[i] = el
-          }}
-          value={value[i] || ''}
-          editable={!disabled}
-          keyboardType="number-pad"
-          maxLength={1}
-          style={[
-            styles.box,
-            error && styles.errorBox,
-          ]}
-          onChangeText={(t) => {
-            if (!/^\d?$/.test(t)) return
+      {Array.from({ length: 6 }).map((_, i) => {
+        const isFocused = focusedIndex === i
+        const hasValue = Boolean(value[i])
 
-            const next = value.split('')
-            next[i] = t
-            onChange(next.join(''))
+        return (
+          <TextInput
+            key={i}
+            ref={(el) => {
+              if (el) inputs.current[i] = el
+            }}
+            value={value[i] || ''}
+            editable={!disabled}
+            keyboardType="number-pad"
+            maxLength={1}
+            caretHidden
+            selectTextOnFocus
+            style={[
+              styles.box,
+              {
+                backgroundColor: colors.surface,
+                borderColor: error
+                  ? colors.danger
+                  : isFocused
+                  ? colors.accent
+                  : colors.border,
+                color: colors.textPrimary,
+                opacity: disabled ? 0.5 : 1,
+              },
+              hasValue && { backgroundColor: colors.background },
+            ]}
+            onFocus={() => setFocusedIndex(i)}
+            onBlur={() => setFocusedIndex(null)}
+            onChangeText={(t) => {
+              if (!/^\d?$/.test(t)) return
 
-            if (t && i < 5) {
-              inputs.current[i + 1]?.focus()
-            }
-          }}
-          onKeyPress={({ nativeEvent }) => {
-            if (nativeEvent.key === 'Backspace' && !value[i] && i > 0) {
-              inputs.current[i - 1]?.focus()
-            }
-          }}
-        />
-      ))}
+              const next = value.split('')
+              next[i] = t
+              onChange(next.join(''))
+
+              if (t && i < 5) {
+                inputs.current[i + 1]?.focus()
+              }
+            }}
+            onKeyPress={({ nativeEvent }) => {
+              if (
+                nativeEvent.key === 'Backspace' &&
+                !value[i] &&
+                i > 0
+              ) {
+                inputs.current[i - 1]?.focus()
+              }
+            }}
+          />
+        )
+      })}
     </Animated.View>
   )
 }
@@ -102,17 +131,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginVertical: 16,
   },
+
   box: {
     width: 48,
     height: 54,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#ccc',
     textAlign: 'center',
     fontSize: 18,
     fontWeight: '600',
-  },
-  errorBox: {
-    borderColor: '#e11d48',
   },
 })

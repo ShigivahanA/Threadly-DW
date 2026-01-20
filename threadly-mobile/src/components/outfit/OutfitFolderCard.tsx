@@ -25,11 +25,12 @@ export default function OutfitFolderCard({
 }: Props) {
   const router = useRouter()
   const scheme = useColorScheme()
-  const colors = scheme === 'dark' ? darkColors : lightColors
+  const isDark = scheme === 'dark'
+  const colors = isDark ? darkColors : lightColors
 
   const { top, bottom, footwear } = outfit.items
 
-  /* Press scale (active:scale-[0.98]) */
+  /* Press scale */
   const scale = useSharedValue(1)
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -62,11 +63,28 @@ export default function OutfitFolderCard({
           {
             backgroundColor: colors.surface,
             borderColor: colors.border,
+
+            // iOS shadow (theme-aware)
+            shadowColor: '#000',
+            shadowOpacity: isDark ? 0.25 : 0.08,
+            shadowRadius: isDark ? 8 : 12,
+            shadowOffset: {
+              width: 0,
+              height: isDark ? 3 : 6,
+            },
+
+            // Android
+            elevation: isDark ? 1 : 3,
           },
         ]}
       >
         {/* Preview */}
-        <View style={styles.preview}>
+        <View
+          style={[
+            styles.preview,
+            { backgroundColor: isDark ? '#000' : '#f3f4f6' },
+          ]}
+        >
           {[top, bottom, footwear].map((item: any) => (
             <Image
               key={item._id}
@@ -81,12 +99,23 @@ export default function OutfitFolderCard({
         <View style={styles.meta}>
           <Text
             numberOfLines={1}
-            style={[styles.occasion, { color: colors.textSecondary }]}
+            style={[
+              styles.occasion,
+              { color: colors.textSecondary },
+            ]}
           >
             {outfit.occasion || 'No occasion'}
           </Text>
 
-          <Text style={[styles.wear, { color: colors.textMuted }]}>
+          <Text
+            style={[
+              styles.wear,
+              {
+                color: colors.textSecondary,
+                opacity: isDark ? 0.6 : 0.7,
+              },
+            ]}
+          >
             Worn {outfit.wearCount} time
             {outfit.wearCount !== 1 ? 's' : ''}
           </Text>
@@ -101,15 +130,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     padding: spacing.sm,
-
-    // iOS shadow (hover:shadow-lg analogue)
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-
-    // Android
-    elevation: 3,
   },
 
   preview: {
@@ -136,6 +156,5 @@ const styles = StyleSheet.create({
 
   wear: {
     fontSize: 11,
-    opacity: 0.7,
   },
 })

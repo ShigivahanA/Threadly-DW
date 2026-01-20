@@ -79,8 +79,32 @@ export default function Profile() {
           icon="person-outline"
           route="/(tabs)/profile/account"
         />
+        <Item
+          title="Privacy policy"
+          icon="shield-checkmark-outline"
+          route="/(tabs)/profile/privacy"
+        />
+        <Item
+          title="Terms & conditions"
+          icon="document-text-outline"
+          route="/(tabs)/profile/terms"
+        />
+        <Item
+          title="Contact support"
+          icon="mail-outline"
+          route="/(tabs)/profile/contact"
+        />
+        <Item
+          title="Storage"
+          icon="server-outline"
+          route="/(tabs)/profile/storage"
+        />
+        <Item
+          title="About"
+          icon="information-circle-outline"
+          route="/(tabs)/profile/about"
+        />
       </View>
-
       {/* Appearance */}
       <View
         style={[

@@ -1,5 +1,8 @@
 import { View, Image, Text, Pressable, StyleSheet } from 'react-native'
 import * as Haptics from 'expo-haptics'
+import { useTheme } from '@/src/theme/ThemeProvider'
+import { lightColors, darkColors } from '@/src/theme/colors'
+
 
 import PrimaryButton from '../auth/PrimaryButton'
 
@@ -25,6 +28,9 @@ export default function ImageStage({
   onRemove,
   loading,
 }: Props) {
+  const { theme } = useTheme()
+  const colors = theme === 'dark' ? darkColors : lightColors
+
   const handleLongPress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     onRemove()
@@ -44,11 +50,17 @@ export default function ImageStage({
             resizeMode="cover"
           />
         ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderText}>
+          <View style={[
+    styles.placeholder,
+    {
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+  ]}>
+            <Text style={{ color: colors.textPrimary }}>
               Tap to select image
             </Text>
-            <Text style={styles.subText}>
+            <Text style={{ color: colors.textSecondary }}>
               Long press to remove
             </Text>
           </View>
@@ -88,16 +100,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
-  },
-
-  placeholderText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-
-  subText: {
-    marginTop: 6,
-    fontSize: 12,
-    opacity: 0.6,
   },
 })

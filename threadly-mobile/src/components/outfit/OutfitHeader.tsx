@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
-import { useColorScheme } from 'react-native'
+import { useTheme } from '@/src/theme/ThemeProvider'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 
@@ -14,8 +14,8 @@ type Props = {
 
 export default function OutfitHeader({ count, loading }: Props) {
   const router = useRouter()
-  const scheme = useColorScheme()
-  const colors = scheme === 'dark' ? darkColors : lightColors
+  const { theme } = useTheme()
+  const colors = theme === 'dark' ? darkColors : lightColors
 
   const goBack = async () => {
     await Haptics.selectionAsync()
@@ -45,7 +45,7 @@ export default function OutfitHeader({ count, loading }: Props) {
           styles.sub,
           {
             color: colors.textSecondary,
-            opacity: scheme === 'dark' ? 0.85 : 0.7,
+            opacity: theme === 'dark' ? 0.85 : 0.7,
           },
         ]}
       >
