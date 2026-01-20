@@ -76,6 +76,9 @@ export default function UploadScreen() {
     const signature = await getUploadSignature()
     const result = await uploadToCloudinary(image, signature)
 
+    console.log('Cloudinary response:', result)
+
+
     const extractedColors =
       result?.colors?.map((c: [string, number]) => c[0]) ?? []
 

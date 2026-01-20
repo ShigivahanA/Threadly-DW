@@ -26,7 +26,8 @@ export const uploadToCloudinary = async (
   formData.append(
     'transformation',
     signature.uploadParams.transformation
-  )
+  ),
+  formData.append('colors', 'true') // ✅ REQUIRED
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${signature.cloudName}/image/upload`,
