@@ -8,6 +8,7 @@ export const lightColors = {
   onPrimary: '#FFFFFF',
   accent: '#000000',
   danger: '#dc2626',
+  error: '#dc2626',
 }
 
 export const darkColors = {
@@ -20,4 +21,5 @@ export const darkColors = {
   onPrimary: '#000000',
   accent: '#ffffff',
   danger: '#ef4444',
+  error: '#ef4444',
 }

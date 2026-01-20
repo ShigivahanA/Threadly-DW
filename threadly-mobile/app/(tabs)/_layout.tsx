@@ -1,31 +1,19 @@
 import { Tabs } from 'expo-router'
-import { useColorScheme } from 'react-native'
+import { useTheme } from '@/src/theme/ThemeProvider'
+import {PillTabBar} from '@/app/(tabs)/PillTabBar'
 
 export default function TabsLayout() {
-  const scheme = useColorScheme()
+  const { theme } = useTheme()
 
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: scheme === 'dark' ? '#0a0a0a' : '#ffffff',
-        },
-        tabBarActiveTintColor: scheme === 'dark' ? '#ffffff' : '#000000',
-      }}
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <PillTabBar {...props} theme={theme} />}
     >
-      <Tabs.Screen
-        name="wardrobe"
-        options={{ title: 'Wardrobe' }}
-      />
-      <Tabs.Screen
-        name="pairing"
-        options={{ title: 'Pairing' }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{ title: 'Profile' }}
-      />
+      <Tabs.Screen name="wardrobe" />
+      <Tabs.Screen name="pairing" />
+      <Tabs.Screen name="upload" />
+      <Tabs.Screen name="profile" />
     </Tabs>
   )
 }
