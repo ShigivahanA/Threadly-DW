@@ -15,10 +15,7 @@ export const getUploadSignature = asyncHandler(async (req, res, next) => {
 const uploadParams = {
   timestamp,
   folder: `wardrobe/${req.user.id}`,
-  colors: true, 
-  transformation: [
-  { effect: 'background_removal' }
-]
+  transformation: 'e_background_removal'
 }
 
 
