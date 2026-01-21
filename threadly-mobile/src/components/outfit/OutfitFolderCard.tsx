@@ -1,6 +1,5 @@
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
-import { useColorScheme } from 'react-native'
 import Animated, {
   FadeInUp,
   useAnimatedStyle,
@@ -9,13 +8,14 @@ import Animated, {
 } from 'react-native-reanimated'
 import * as Haptics from 'expo-haptics'
 
+import { useTheme } from '@/src/theme/ThemeProvider'
 import { lightColors, darkColors } from '@/src/theme/colors'
 import { spacing } from '@/src/theme/spacing'
 
 type Props = {
   outfit: any
   index: number
-  width?: number
+  width?: number | string
 }
 
 export default function OutfitFolderCard({
@@ -24,11 +24,12 @@ export default function OutfitFolderCard({
   width = '48%',
 }: Props) {
   const router = useRouter()
-  const scheme = useColorScheme()
-  const isDark = scheme === 'dark'
-  const colors = isDark ? darkColors : lightColors
+  const { theme } = useTheme()
+  const colors = theme === 'dark' ? darkColors : lightColors
+  const isDark = theme === 'dark'
 
-  const { top, bottom, footwear } = outfit.items
+  const items = outfit.items || {}
+  const previewItems = [items.top, items.bottom, items.footwear].filter(Boolean)
 
   /* Press scale */
   const scale = useSharedValue(1)
@@ -39,10 +40,10 @@ export default function OutfitFolderCard({
 
   const handlePress = async () => {
     await Haptics.selectionAsync()
-    router.push({
-      pathname: '/outfits/[id]',
-      params: { id: outfit._id },
-    })
+     router.push({
+    pathname: '/(tabs)/profile/outfit/[id]',
+    params: { id: outfit._id },
+  })
   }
 
   return (
@@ -64,9 +65,9 @@ export default function OutfitFolderCard({
             backgroundColor: colors.surface,
             borderColor: colors.border,
 
-            // iOS shadow (theme-aware)
+            // iOS
             shadowColor: '#000',
-            shadowOpacity: isDark ? 0.25 : 0.08,
+            shadowOpacity: isDark ? 0.22 : 0.08,
             shadowRadius: isDark ? 8 : 12,
             shadowOffset: {
               width: 0,
@@ -82,10 +83,10 @@ export default function OutfitFolderCard({
         <View
           style={[
             styles.preview,
-            { backgroundColor: isDark ? '#000' : '#f3f4f6' },
+            { backgroundColor: colors.background },
           ]}
         >
-          {[top, bottom, footwear].map((item: any) => (
+          {previewItems.map((item: any) => (
             <Image
               key={item._id}
               source={{ uri: item.imageUrl }}
@@ -112,7 +113,7 @@ export default function OutfitFolderCard({
               styles.wear,
               {
                 color: colors.textSecondary,
-                opacity: isDark ? 0.6 : 0.7,
+                opacity: isDark ? 0.6 : 0.75,
               },
             ]}
           >

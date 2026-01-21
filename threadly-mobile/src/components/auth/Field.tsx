@@ -5,6 +5,7 @@ import type { TextInputProps } from 'react-native'
 import { lightColors, darkColors } from '../../theme/colors'
 import { spacing } from '../../theme/spacing'
 import { typography } from '../../theme/typography'
+import { useTheme } from '@/src/theme/ThemeProvider'
 
 type Props = TextInputProps & {
   label: string
@@ -15,8 +16,8 @@ export default function Field({
   style,
   ...inputProps
 }: Props) {
-  const scheme = useColorScheme()
-  const colors = scheme === 'dark' ? darkColors : lightColors
+  const { theme } = useTheme()
+  const colors = theme === 'dark' ? darkColors : lightColors
 
   return (
     <View style={{ marginBottom: spacing.lg }}>

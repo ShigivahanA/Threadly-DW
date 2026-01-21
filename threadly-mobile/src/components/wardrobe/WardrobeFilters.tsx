@@ -1,5 +1,7 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { spacing } from '@/src/theme/spacing'
+import { useTheme } from '@/src/theme/ThemeProvider'
+import { lightColors, darkColors } from '@/src/theme/colors'
 
 const CATEGORIES = ['shirt', 'tshirt', 'pant', 'jeans', 'jacket', 'shoes']
 
@@ -12,36 +14,63 @@ export default function WardrobeFilters({
   onChange: (v: string | null) => void
   onReset: () => void
 }) {
+  const { theme } = useTheme()
+  const colors = theme === 'dark' ? darkColors : lightColors
+
   return (
     <View style={styles.wrap}>
-      <View style={styles.row}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
+        keyboardShouldPersistTaps="handled"
+      >
         {CATEGORIES.map((c) => {
           const active = value === c
+
           return (
             <Pressable
               key={c}
               onPress={() => onChange(active ? null : c)}
               style={[
                 styles.pill,
-                active && styles.active,
+                {
+                  backgroundColor: active
+                    ? colors.textPrimary
+                    : colors.surface,
+                  borderColor: active
+                    ? colors.textPrimary
+                    : colors.border,
+                },
               ]}
             >
               <Text
-                style={[
-                  styles.text,
-                  active && styles.textActive,
-                ]}
+                style={{
+                  fontSize: 13,
+                  textTransform: 'capitalize',
+                  color: active
+                    ? colors.background
+                    : colors.textSecondary,
+                  fontWeight: active ? '600' : '500',
+                }}
               >
                 {c}
               </Text>
             </Pressable>
           )
         })}
-      </View>
+      </ScrollView>
 
       {value && (
         <Pressable onPress={onReset}>
-          <Text style={styles.reset}>Reset filters</Text>
+          <Text
+            style={[
+              styles.reset,
+              { color: colors.textSecondary },
+            ]}
+          >
+            Reset filters
+          </Text>
         </Pressable>
       )}
     </View>
@@ -62,22 +91,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  active: {
-    backgroundColor: '#000',
-    borderColor: '#000',
-  },
-  text: {
-    fontSize: 13,
-    textTransform: 'capitalize',
-    color: '#555',
-  },
-  textActive: {
-    color: '#fff',
   },
   reset: {
     fontSize: 12,
-    color: '#777',
   },
 })

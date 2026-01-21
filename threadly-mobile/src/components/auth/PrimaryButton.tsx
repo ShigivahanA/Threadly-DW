@@ -8,12 +8,14 @@ import {
 import { useColorScheme } from 'react-native'
 import { lightColors, darkColors } from '../../theme/colors'
 import { spacing } from '../../theme/spacing'
+import { useTheme } from '@/src/theme/ThemeProvider'
 
 type Props = {
   title: string
   onPress: () => void
   loading?: boolean
   disabled?: boolean
+  variant?: 'primary' | 'danger'
 }
 
 export default function PrimaryButton({
@@ -21,10 +23,11 @@ export default function PrimaryButton({
   onPress,
   loading,
   disabled,
+  variant
 }: Props) {
-  const scheme = useColorScheme()
-  const colors = scheme === 'dark' ? darkColors : lightColors
-  const textColor = scheme === 'dark' ? '#000' : '#fff'
+  const { theme } = useTheme()
+  const colors = theme === 'dark' ? darkColors : lightColors
+  const textColor = theme === 'dark' ? '#000' : '#fff'
 
   return (
     <Pressable
@@ -33,7 +36,9 @@ export default function PrimaryButton({
       style={[
         styles.button,
         {
-          backgroundColor: colors.accent,
+          backgroundColor: variant === 'danger'
+    ? colors.danger
+    : colors.accent,
           opacity: disabled || loading ? 0.6 : 1,
         },
       ]}

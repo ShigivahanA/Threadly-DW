@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -7,6 +7,8 @@ import * as Haptics from 'expo-haptics'
 import { lightColors, darkColors } from '@/src/theme/colors'
 import { spacing } from '@/src/theme/spacing'
 import { useTheme } from '@/src/theme/ThemeProvider'
+
+const PILL_HEIGHT = 64
 
 export default function Profile() {
   const { theme, setTheme } = useTheme() // ✅ GLOBAL
@@ -50,15 +52,17 @@ export default function Profile() {
   )
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingTop: insets.top + spacing.sm,
-          backgroundColor: colors.background,
-        },
-      ]}
-    >
+    <ScrollView
+    showsVerticalScrollIndicator={false}
+    contentContainerStyle={[
+      styles.container,
+      {
+        paddingTop: insets.top + spacing.sm,
+        paddingBottom: insets.bottom + PILL_HEIGHT + spacing.lg,
+        backgroundColor: colors.background,
+      },
+    ]}
+  >
       <Text style={[styles.title, { color: colors.textPrimary }]}>
         Profile
       </Text>
@@ -168,13 +172,12 @@ export default function Profile() {
           })}
         </View>
       </View>
-    </View>
+    </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingHorizontal: spacing.xl,
   },
   title: {

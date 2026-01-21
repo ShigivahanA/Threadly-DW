@@ -1,9 +1,9 @@
 import { View, TextInput, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useState } from 'react'
-import { useColorScheme } from 'react-native'
 import { lightColors, darkColors } from '../../theme/colors'
 import { spacing } from '../../theme/spacing'
+import { useTheme } from '@/src/theme/ThemeProvider'
 
 type Props = {
   value: string
@@ -20,8 +20,8 @@ export default function SecureInput({
   keyboardType,
   maxLength,
 }: Props) {
-  const scheme = useColorScheme()
-  const colors = scheme === 'dark' ? darkColors : lightColors
+  const { theme } = useTheme()
+  const colors = theme === 'dark' ? darkColors : lightColors
   const [visible, setVisible] = useState(false)
 
   return (

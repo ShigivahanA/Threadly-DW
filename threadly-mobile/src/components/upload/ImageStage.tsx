@@ -1,9 +1,8 @@
 import { View, Image, Text, Pressable, StyleSheet } from 'react-native'
 import * as Haptics from 'expo-haptics'
+import { useActionSheet } from '@expo/react-native-action-sheet'
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { lightColors, darkColors } from '@/src/theme/colors'
-
-
 import PrimaryButton from '../auth/PrimaryButton'
 
 type UploadedImage = {
@@ -15,7 +14,8 @@ type Props = {
   image: string | null
   uploaded: UploadedImage | null
   loading: boolean
-  onPick: () => void
+  onPickCamera: () => void
+  onPickGallery: () => void
   onUpload: () => void
   onRemove: () => void
 }
@@ -23,13 +23,30 @@ type Props = {
 export default function ImageStage({
   image,
   uploaded,
-  onPick,
+  onPickCamera,
+  onPickGallery,
   onUpload,
   onRemove,
   loading,
 }: Props) {
   const { theme } = useTheme()
   const colors = theme === 'dark' ? darkColors : lightColors
+  const { showActionSheetWithOptions } = useActionSheet()
+
+  const openPicker = async () => {
+    await Haptics.selectionAsync()
+
+    showActionSheetWithOptions(
+      {
+        options: ['Take photo', 'Choose from library', 'Cancel'],
+        cancelButtonIndex: 2,
+      },
+      (index) => {
+        if (index === 0) onPickCamera()
+        if (index === 1) onPickGallery()
+      }
+    )
+  }
 
   const handleLongPress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
@@ -39,7 +56,7 @@ export default function ImageStage({
   return (
     <View style={styles.container}>
       <Pressable
-        onPress={onPick}
+        onPress={openPicker}
         onLongPress={handleLongPress}
         disabled={loading}
       >
@@ -50,18 +67,20 @@ export default function ImageStage({
             resizeMode="cover"
           />
         ) : (
-          <View style={[
-    styles.placeholder,
-    {
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
-    },
-  ]}>
+          <View
+            style={[
+              styles.placeholder,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+              },
+            ]}
+          >
             <Text style={{ color: colors.textPrimary }}>
-              Tap to select image
+              Tap to add image
             </Text>
             <Text style={{ color: colors.textSecondary }}>
-              Long press to remove
+              Camera or library
             </Text>
           </View>
         )}
@@ -78,20 +97,15 @@ export default function ImageStage({
   )
 }
 
-/* ======================
-   Styles
-====================== */
 const styles = StyleSheet.create({
   container: {
     gap: 12,
   },
-
   image: {
     width: '100%',
     height: 260,
     borderRadius: 16,
   },
-
   placeholder: {
     height: 260,
     borderRadius: 16,

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Alert } from 'react-native'
 import { useState, useEffect } from 'react'
-import { useColorScheme } from 'react-native'
+import { useTheme } from '@/src/theme/ThemeProvider'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Link, router } from 'expo-router'
 import Animated, {
@@ -31,8 +31,8 @@ export default function Login() {
   const fadeTabs = useSharedValue(0)
   const fadeForm = useSharedValue(0)
 
-  const scheme = useColorScheme()
-  const colors = scheme === 'dark' ? darkColors : lightColors
+  const { theme } = useTheme()
+  const colors = theme === 'dark' ? darkColors : lightColors
 
   const [mode, setMode] = useState<'password' | 'otp'>('password')
   const [step, setStep] = useState<'email' | 'verify'>('email')
@@ -151,7 +151,7 @@ export default function Login() {
 
   return (
     <SafeAreaView
-      edges={['top']}
+      edges={['top', 'bottom']}
       style={[styles.safe, { backgroundColor: colors.background }]}
     >
       <View style={styles.screen}>

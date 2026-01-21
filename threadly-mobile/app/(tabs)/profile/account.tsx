@@ -61,6 +61,7 @@ export default function AccountScreen() {
         setEmail(res.email)
         setSessions(res.sessions || [])
       } catch {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
         toast.show('Failed to load profile', 'error')
       } finally {
         mounted && setLoading(false)
@@ -158,7 +159,8 @@ export default function AccountScreen() {
 
   try {
     await logout()
-    router.replace('/(auth)/login')
+    toast.show('Signed out successfully', 'success')
+    router.replace('/')
   } catch {
     toast.show('Logout failed', 'error')
   }
@@ -327,6 +329,7 @@ export default function AccountScreen() {
             setPwStep('otp')
             toast.show('OTP sent to your email', 'success')
           } catch {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
             toast.show('Failed to send OTP', 'error')
           } finally {
             setPwLoading(false)
@@ -417,11 +420,13 @@ export default function AccountScreen() {
         !confirmPassword ||
         !otp
       ) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
         toast.show('All fields are required', 'error')
         return
       }
 
       if (password !== confirmPassword) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
         toast.show('Passwords do not match', 'error')
         return
       }
@@ -433,7 +438,9 @@ export default function AccountScreen() {
           newPassword: password,
           otp,
         })
-
+        Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success
+        )
         toast.show(
           'Password updated. Please sign in again.',
           'success'
@@ -441,6 +448,7 @@ export default function AccountScreen() {
 
         await logout()
       } catch (e: any) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
         toast.show(
           e?.message || 'Password update failed',
           'error'

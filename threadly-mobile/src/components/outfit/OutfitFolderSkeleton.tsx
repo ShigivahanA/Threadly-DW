@@ -5,9 +5,9 @@ type Props = {
   width?: number
 }
 
-export default function OutfitFolderSkeleton() {
+export default function OutfitFolderSkeleton({ width }: Props) {
   return (
-    <View style={[styles.card]}>
+    <View style={[styles.card, { width }]}>
       {/* Image grid */}
       <View style={styles.grid}>
         {Array.from({ length: 3 }).map((_, i) => (

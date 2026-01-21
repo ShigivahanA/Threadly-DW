@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { StyleSheet, FlatList, Dimensions, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSafeAreaInsets  } from 'react-native-safe-area-context'
 
 import wardrobeService from '@/src/services/wardrobeService'
 import FavouriteHeader from '@/src/components/Favourite/FavouriteHeader'
@@ -17,9 +17,10 @@ const getColumns = (width: number) => {
 }
 
 export default function FavouritesScreen() {
+  const insets = useSafeAreaInsets()
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-
+  const TAB_BAR_HEIGHT = 64
   const screenWidth = Dimensions.get('window').width
   const columns = getColumns(screenWidth)
 
@@ -32,7 +33,7 @@ export default function FavouritesScreen() {
     )
   }, [screenWidth, columns])
 
-  const ITEM_HEIGHT = cardWidth + GAP
+  const ITEM_HEIGHT = cardWidth
 
   useEffect(() => {
     let mounted = true
@@ -55,46 +56,56 @@ export default function FavouritesScreen() {
   }, [])
 
   return (
-    <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <View style={styles.header}>
-        <FavouriteHeader count={items.length} loading={loading} />
-      </View>
+  <>
+    {/* Header */}
+    <View
+  style={[
+    styles.header,
+    { paddingTop: insets.top + spacing.sm },
+  ]}
+>
+      <FavouriteHeader count={items.length} loading={loading} />
+    </View>
 
-      {/* Content */}
-      {loading ? (
-        <FavouriteSkeleton columns={columns} />
-      ) : items.length === 0 ? (
-        <FavouriteEmpty />
-      ) : (
-        <FlatList
-          data={items}
-          keyExtractor={(item) => item._id}
-          numColumns={columns}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.list}
-          columnWrapperStyle={columns > 1 ? styles.row : undefined}
-          renderItem={({ item, index }) => (
-            <FavouriteGridItem
-              item={item}
-              index={index}
-              width={cardWidth}
-            />
-          )}
-          getItemLayout={(_, index) => ({
+    {/* Content */}
+    {loading ? (
+      <FavouriteSkeleton columns={columns} />
+    ) : items.length === 0 ? (
+      <FavouriteEmpty />
+    ) : (
+      <FlatList
+        data={items}
+        keyExtractor={(item) => item._id}
+        numColumns={columns}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.list,
+          {
+            paddingTop: spacing.sm, 
+            paddingBottom:
+            insets.bottom + TAB_BAR_HEIGHT + spacing.lg,
+          },
+        ]}
+        columnWrapperStyle={columns > 1 ? styles.row : undefined}
+        renderItem={({ item, index }) => (
+          <FavouriteGridItem
+            item={item}
+            index={index}
+            width={cardWidth}
+          />
+        )}
+        getItemLayout={(_, index) => {
+          const row = Math.floor(index / columns)
+          return {
             length: ITEM_HEIGHT,
-            offset:
-              ITEM_HEIGHT *
-              Math.floor(index / columns),
+            offset: row * (ITEM_HEIGHT + GAP),
             index,
-          })}
-          initialNumToRender={columns * 4}
-          windowSize={7}
-          removeClippedSubviews
-        />
-      )}
-    </SafeAreaView>
-  )
+          }
+        }}
+      />
+    )}
+  </>
+)
 }
 
 const styles = StyleSheet.create({

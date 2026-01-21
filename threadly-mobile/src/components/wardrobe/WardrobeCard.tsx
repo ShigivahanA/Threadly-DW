@@ -1,6 +1,9 @@
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 import { spacing } from '@/src/theme/spacing'
+import { useTheme } from '@/src/theme/ThemeProvider'
+import { lightColors, darkColors } from '@/src/theme/colors'
 
 export default function WardrobeCard({
   item,
@@ -11,17 +14,46 @@ export default function WardrobeCard({
   width: number
   onToggleFavorite: (id: string) => void
 }) {
+  const router = useRouter()
+  const { theme } = useTheme()
+  const colors = theme === 'dark' ? darkColors : lightColors
+
   return (
-    <Pressable style={[styles.card, { width }]}>
-      {/* Favorite */}
+    <Pressable
+      onPress={() =>
+        router.push(`/(tabs)/wardrobe/${item._id}`)
+      }
+      style={[
+        styles.card,
+        {
+          width,
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+        },
+      ]}
+    >
+      {/* ❤️ Favorite (isolated press) */}
       <Pressable
-        onPress={() => onToggleFavorite(item._id)}
-        style={styles.favorite}
+        onPress={(e) => {
+          e.stopPropagation() // 👈 CRITICAL
+          onToggleFavorite(item._id)
+        }}
+        style={[
+          styles.favorite,
+          {
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+          },
+        ]}
       >
         <Ionicons
           name={item.isFavorite ? 'heart' : 'heart-outline'}
           size={16}
-          color={item.isFavorite ? '#ef4444' : '#666'}
+          color={
+            item.isFavorite
+              ? colors.danger
+              : colors.textSecondary
+          }
         />
       </Pressable>
 
@@ -31,8 +63,25 @@ export default function WardrobeCard({
       {/* Meta */}
       <View style={styles.meta}>
         <View style={styles.row}>
-          <Text style={styles.category}>{item.category}</Text>
-          {item.size && <Text style={styles.size}>{item.size}</Text>}
+          <Text
+            style={[
+              styles.category,
+              { color: colors.textSecondary },
+            ]}
+          >
+            {item.category}
+          </Text>
+
+          {item.size && (
+            <Text
+              style={[
+                styles.size,
+                { color: colors.textSecondary },
+              ]}
+            >
+              {item.size}
+            </Text>
+          )}
         </View>
 
         {item.colors?.length > 0 && (
@@ -40,7 +89,13 @@ export default function WardrobeCard({
             {item.colors.slice(0, 4).map((c: string) => (
               <View
                 key={c}
-                style={[styles.dot, { backgroundColor: c }]}
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor: c,
+                    borderColor: colors.border,
+                  },
+                ]}
               />
             ))}
           </View>
@@ -50,53 +105,58 @@ export default function WardrobeCard({
   )
 }
 
+
 const styles = StyleSheet.create({
   card: {
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
     overflow: 'hidden',
-    backgroundColor: '#fff',
   },
+
   favorite: {
     position: 'absolute',
     top: 8,
     right: 8,
     zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 999,
     padding: 6,
+    borderWidth: 1,
   },
+
   image: {
     width: '100%',
     aspectRatio: 1,
   },
+
   meta: {
     padding: spacing.sm,
     gap: 6,
   },
+
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+
   category: {
     fontSize: 11,
     textTransform: 'uppercase',
-    color: '#666',
+    fontWeight: '500',
   },
+
   size: {
     fontSize: 11,
-    color: '#999',
   },
+
   colors: {
     flexDirection: 'row',
     gap: 6,
   },
+
   dot: {
     width: 12,
     height: 12,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#00000020',
   },
 })

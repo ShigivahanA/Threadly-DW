@@ -19,7 +19,7 @@ export default function OutfitHeader({ count, loading }: Props) {
 
   const goBack = async () => {
     await Haptics.selectionAsync()
-    router.back()
+    router.replace('/(tabs)/profile')
   }
 
   return (
