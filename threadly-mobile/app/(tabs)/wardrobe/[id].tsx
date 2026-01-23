@@ -181,7 +181,7 @@ export default function EditWardrobeItemScreen() {
    <View
       style={[
         styles.header,
-        { paddingTop: insets.top + spacing.sm },
+        { paddingTop: insets.top },
       ]}
     >
       <EditWardrobeHeader />
