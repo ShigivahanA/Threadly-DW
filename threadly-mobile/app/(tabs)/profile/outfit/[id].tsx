@@ -12,6 +12,9 @@ import { useLocalSearchParams, router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
 import { Ionicons } from '@expo/vector-icons'
+import { normalize } from '@/src/utils/responsive'
+import Animated, { FadeInDown } from 'react-native-reanimated'
+import { BlurView } from 'expo-blur'
 
 import outfitService from '@/src/services/outfitService'
 import OutfitDetailSkeleton from '@/src/components/outfit/OutfitDetailSkeleton'
@@ -20,14 +23,16 @@ import { useToast } from '@/src/components/Toast/ToastProvider'
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { lightColors, darkColors } from '@/src/theme/colors'
 import { spacing } from '@/src/theme/spacing'
+import PrimaryButton from '@/src/components/auth/PrimaryButton'
 
 const TAB_BAR_HEIGHT = 64
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
+const CARD_WIDTH = SCREEN_WIDTH * 0.6 // Consistent Blueprint Scale
 
 export default function OutfitDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const insets = useSafeAreaInsets()
   const toast = useToast()
-
   const { theme } = useTheme()
   const colors = theme === 'dark' ? darkColors : lightColors
 
@@ -35,258 +40,211 @@ export default function OutfitDetailScreen() {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
 
-  const screenWidth = Dimensions.get('window').width
-
-  /** ✅ Explicit width (CRITICAL for images) */
-  const cardWidth = useMemo(() => {
-    return screenWidth - spacing.xl * 2
-  }, [screenWidth])
-
   useEffect(() => {
-  if (!id) return
-
-  outfitService
-    .getOutfitById(id)
-    .then((res) => {
-      const data = res?.data   // ✅ THIS IS THE FIX
-
-      if (!data) {
-        throw new Error('No outfit')
-      }
-
-      setOutfit({
-        ...data,
-        items: {
-          top: data?.items?.top ?? null,
-          bottom: data?.items?.bottom ?? null,
-          footwear: data?.items?.footwear ?? null,
-        },
+    if (!id) return
+    outfitService.getOutfitById(id)
+      .then((res) => {
+        if (!res) throw new Error('No outfit')
+        setOutfit(res)
       })
-    })
-    .catch(() => {
-      toast.show('Outfit not found', 'error')
-      router.back()
-    })
-    .finally(() => setLoading(false))
-}, [id])
+      .catch(() => {
+        toast.show('Outfit record lost', 'error')
+        router.back()
+      })
+      .finally(() => setLoading(false))
+  }, [id])
 
-  if (loading) return <OutfitDetailSkeleton />
-
-  if (!outfit) {
-    return (
-      <View style={styles.empty}>
-        <Text style={{ color: colors.textSecondary }}>
-          Outfit not found
-        </Text>
-      </View>
-    )
-  }
-
-  const items = [
-    outfit.items?.top,
-    outfit.items?.bottom,
-    outfit.items?.footwear,
-  ].filter(Boolean)
 
   const markWorn = async () => {
-  setUpdating(true)
-
-  try {
-    await outfitService.markWorn(id)
-
-    setOutfit((prev: any) => {
-      const nextWearCount =
-        typeof prev.wearCount === 'number'
-          ? prev.wearCount + 1
-          : 1
-
-      const now = new Date().toISOString()
-
-      return {
+    setUpdating(true)
+    try {
+      await outfitService.markWorn(id)
+      setOutfit((prev: any) => ({
         ...prev,
-        wearCount: nextWearCount,
-        lastWornAt: now,
-      }
-    })
-
-    Haptics.notificationAsync(
-      Haptics.NotificationFeedbackType.Success
-    )
-    toast.show('Marked as worn today', 'success')
-  } catch {
-    Haptics.notificationAsync(
-      Haptics.NotificationFeedbackType.Error
-    )
-    toast.show('Failed to update outfit', 'error')
-  } finally {
-    setUpdating(false)
+        wearCount: (prev.wearCount || 0) + 1,
+        lastWornAt: new Date().toISOString(),
+      }))
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      toast.show('Wear count incremented', 'success')
+    } catch {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+      toast.show('Failed to log wear', 'error')
+    } finally {
+      setUpdating(false)
+    }
   }
-}
+
+  if (loading) return <OutfitDetailSkeleton />
+  if (!outfit) return null
+
+  // Ensure items exist
+  const top = outfit.items?.top
+  const bottom = outfit.items?.bottom
+  const shoe = outfit.items?.footwear
 
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-          paddingTop: insets.top + spacing.sm,
-          paddingBottom:
-            insets.bottom + TAB_BAR_HEIGHT + spacing.xl,
-        },
-      ]}
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{
+        paddingTop: insets.top + spacing.lg,
+        paddingBottom: insets.bottom + TAB_BAR_HEIGHT + spacing.xl,
+      }}
     >
-      {/* 🔙 Header */}
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={12}
-          style={styles.back}
-        >
-          <Ionicons
-            name="chevron-back"
-            size={22}
-            color={colors.textPrimary}
-          />
+      {/* --- Header --- */}
+      <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={10}>
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </Pressable>
+        <View style={{ alignItems: 'center' }}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>ARCHIVE</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>// {id?.slice(-6).toUpperCase()}</Text>
+        </View>
+        <View style={{ width: 24 }} />
+      </Animated.View>
 
-        <Text
-          style={[
-            styles.title,
-            { color: colors.textPrimary },
-          ]}
-        >
-          Outfit Details
-        </Text>
-      </View>
+      {/* --- Blueprint View --- */}
+      <View style={styles.stage}>
+        {/* The Thread Line */}
+        <View style={[styles.threadLine, { borderColor: colors.border }]} />
 
-      {/* 🧥 Outfit items */}
-      <View style={styles.items}>
-        {items.map((item: any) => (
-          <OutfitItemCard
-            key={item._id}
-            item={item}
-            width={cardWidth}  
-          />
-        ))}
-      </View>
+        {/* Items Staggered */}
+        {top && (
+          <Animated.View entering={FadeInDown.delay(100).duration(600)} style={[styles.itemWrapper, { alignSelf: 'flex-start', marginLeft: spacing.lg }]}>
+            <OutfitItemCard item={top} width={CARD_WIDTH} />
+            <View style={[styles.connector, { right: -20, borderColor: colors.border }]} />
+          </Animated.View>
+        )}
 
-      {/* 📊 Stats */}
-      <View style={styles.stats}>
-        <Text
-          style={[
-            styles.statText,
-            { color: colors.textSecondary },
-          ]}
-        >
-          Worn {outfit.wearCount} time
-          {outfit.wearCount !== 1 ? 's' : ''}
-        </Text>
+        {bottom && (
+          <Animated.View entering={FadeInDown.delay(200).duration(600)} style={[styles.itemWrapper, { alignSelf: 'flex-end', marginRight: spacing.lg, marginTop: -40 }]}>
+            <OutfitItemCard item={bottom} width={CARD_WIDTH} />
+            <View style={[styles.connector, { left: -20, borderColor: colors.border }]} />
+          </Animated.View>
+        )}
 
-        {outfit.lastWornAt && (
-          <Text
-            style={[
-              styles.subText,
-              { color: colors.textSecondary },
-            ]}
-          >
-            Last worn on{' '}
-            {new Date(
-              outfit.lastWornAt
-            ).toLocaleDateString()}
-          </Text>
+        {shoe && (
+          <Animated.View entering={FadeInDown.delay(300).duration(600)} style={[styles.itemWrapper, { alignSelf: 'center', marginTop: -40 }]}>
+            <OutfitItemCard item={shoe} width={CARD_WIDTH} />
+          </Animated.View>
         )}
       </View>
 
-      {/* ✅ Action */}
-      <Pressable
-  disabled={updating}
-  onPress={markWorn}
-  style={[
-    styles.primaryButton,
-    {
-      backgroundColor: colors.primary,
-      opacity: updating ? 0.6 : 1,
-    },
-  ]}
->
-  {updating ? (
-    <ActivityIndicator  />
-  ) : (
-    <Text
-      style={[
-        styles.primaryButtonText,
-        { color: colors.onPrimary },
-      ]}
-    >
-      Mark as worn today
-    </Text>
-  )}
-</Pressable>
+      {/* --- Metadata Specs --- */}
+      <BlurView
+        intensity={theme === 'dark' ? 50 : 80}
+        tint={theme === 'dark' ? 'dark' : 'light'}
+        style={[styles.specs, { borderColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+      >
+        <View style={styles.specRow}>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>OCCASION</Text>
+          <Text style={[styles.value, { color: colors.textPrimary }]}>{outfit.occasion || 'N/A'}</Text>
+        </View>
+        <View style={styles.specRow}>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>WEAR_COUNT</Text>
+          <Text style={[styles.value, { color: colors.textPrimary }]}>{outfit.wearCount}</Text>
+        </View>
+        {outfit.lastWornAt && (
+          <View style={styles.specRow}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>LAST_WORN</Text>
+            <Text style={[styles.value, { color: colors.textPrimary }]}>{new Date(outfit.lastWornAt).toLocaleDateString()}</Text>
+          </View>
+        )}
+        {outfit.notes ? (
+          <View style={styles.specRow}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>NOTES</Text>
+            <Text style={[styles.value, { color: colors.textPrimary }]}>{outfit.notes}</Text>
+          </View>
+        ) : null}
+
+        <View style={{ marginTop: 12 }}>
+          <PrimaryButton
+            title={updating ? "LOGGING..." : "LOG WEAR"}
+            onPress={markWorn}
+            loading={updating}
+          />
+        </View>
+      </BlurView>
+
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.xl,
-  },
-
   header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.xl,
-    gap: spacing.sm,
+    marginBottom: 40,
+    paddingHorizontal: spacing.xl,
   },
-
-  back: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+  backBtn: {
+    padding: 8,
+    marginLeft: -8,
   },
-
   title: {
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: normalize(22),
+    fontWeight: '900',
+    letterSpacing: 2,
   },
-
-  items: {
-    gap: spacing.lg,
-    marginBottom: spacing.xl,
+  subtitle: {
+    fontSize: normalize(10),
+    fontFamily: 'Courier',
+    opacity: 0.6,
   },
-
-  stats: {
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: spacing.xl,
+  stage: {
+    position: 'relative',
+    marginBottom: 40,
+    minHeight: 400,
   },
-
-  statText: {
-    fontSize: 14,
+  threadLine: {
+    position: 'absolute',
+    left: '50%',
+    top: 0,
+    bottom: 0,
+    borderLeftWidth: 1,
+    borderStyle: 'dashed',
+    opacity: 0.3,
   },
-
-  subText: {
-    fontSize: 12,
-    opacity: 0.8,
+  itemWrapper: {
+    marginBottom: 0,
+    position: 'relative',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
   },
-
-  primaryButton: {
-    height: 52,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+  connector: {
+    position: 'absolute',
+    top: '50%',
+    width: 20,
+    borderTopWidth: 1,
+    borderStyle: 'dashed',
+    opacity: 0.3,
   },
-
-  primaryButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+  specs: {
+    marginHorizontal: spacing.xl,
+    padding: spacing.xl,
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    gap: 16,
   },
-
-  empty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  specRow: {
+    gap: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(150,150,150,0.1)',
+    paddingBottom: 12,
   },
+  label: {
+    fontSize: normalize(10),
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  value: {
+    fontSize: normalize(14),
+    fontFamily: 'Courier',
+    fontWeight: '500',
+  }
 })

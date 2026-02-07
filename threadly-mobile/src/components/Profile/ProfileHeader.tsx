@@ -2,6 +2,8 @@ import { View, Text, StyleSheet, Pressable } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
+import Animated, { FadeInDown } from 'react-native-reanimated'
+import { normalize } from '@/src/utils/responsive'
 
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { lightColors, darkColors } from '@/src/theme/colors'
@@ -14,7 +16,7 @@ type Props = {
 
 export default function ProfileHeader({
   loading,
-  title = 'Account',
+  title = 'ACCOUNT', // Default to uppercase for consistency
 }: Props) {
   const { theme } = useTheme()
   const colors = theme === 'dark' ? darkColors : lightColors
@@ -26,62 +28,40 @@ export default function ProfileHeader({
   }
 
   return (
-    <View
-      style={[
-        styles.wrap,
-        { backgroundColor: colors.background },
-      ]}
-    >
-      <View style={styles.row}>
-        <Pressable
-          onPress={goBack}
-          hitSlop={10}
-          style={styles.back}
-        >
-          <Ionicons
-            name="chevron-back"
-            size={22}
-            color={colors.textPrimary}
-          />
-        </Pressable>
+    <View style={styles.container}>
+      {/* Back Button */}
+      <Pressable onPress={goBack} hitSlop={12} style={styles.back}>
+        <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+      </Pressable>
 
-        <Text
-          style={[
-            styles.title,
-            { color: colors.textPrimary },
-          ]}
-          numberOfLines={1}
-        >
-          {title}
-        </Text>
-      </View>
+      {/* Animated Title */}
+      <Animated.Text
+        entering={FadeInDown.duration(600).delay(100)}
+        style={[styles.title, { color: colors.textPrimary }]}
+      >
+        {title.toUpperCase()}
+      </Animated.Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    gap: 4,
+  container: {
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 24,
   },
-
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-
   back: {
-    padding: 4, // 👈 IMPORTANT: no forced height
+    marginBottom: 16,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
-
   title: {
-    fontSize: 22,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-  },
-
-  sub: {
-    fontSize: 13,
-    marginLeft: 26, // aligns under text, not arrow
+    fontSize: normalize(28),
+    fontWeight: '800',
+    letterSpacing: -1,
+    textTransform: 'uppercase',
   },
 })

@@ -1,27 +1,50 @@
 import { View, StyleSheet, Dimensions } from 'react-native'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing
+} from 'react-native-reanimated'
+import { useEffect } from 'react'
+
 import { spacing } from '@/src/theme/spacing'
+import { useTheme } from '@/src/theme/ThemeProvider'
 
 const SCREEN_WIDTH = Dimensions.get('window').width
 const GAP = spacing.md
 const CARD_WIDTH = (SCREEN_WIDTH - spacing.xl * 2 - GAP) / 2
 
+const SkeletonElement = ({ style, theme }: any) => {
+  const opacity = useSharedValue(0.3)
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withTiming(0.6, { duration: 1000, easing: Easing.inOut(Easing.quad) }),
+      -1,
+      true
+    )
+  }, [])
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }))
+  return (
+    <Animated.View style={[
+      style,
+      { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' },
+      animatedStyle
+    ]} />
+  )
+}
+
 export default function WardrobeSkeleton() {
+  const { theme } = useTheme()
   return (
     <View style={styles.grid}>
-      {Array.from({ length: 8 }).map((_, i) => (
+      {Array.from({ length: 6 }).map((_, i) => (
         <View key={i} style={[styles.card, { width: CARD_WIDTH }]}>
-          {/* Image */}
-          <View style={styles.image} />
+          {/* Image Placeholder */}
+          <SkeletonElement theme={theme} style={styles.image} />
 
-          {/* Meta */}
-          <View style={styles.meta}>
-            <View style={styles.lineShort} />
-            <View style={styles.colors}>
-              {Array.from({ length: 3 }).map((_, j) => (
-                <View key={j} style={styles.dot} />
-              ))}
-            </View>
-          </View>
+          {/* Internal Meta */}
+          <SkeletonElement theme={theme} style={styles.cat} />
         </View>
       ))}
     </View>
@@ -34,42 +57,24 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: GAP,
   },
-
   card: {
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#fff',
+    borderRadius: 12, // Match WardrobeCard
+    aspectRatio: 3 / 4,
     overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: 'transparent',
   },
-
   image: {
     width: '100%',
-    aspectRatio: 1,
-    backgroundColor: '#e5e7eb',
+    height: '100%',
+    borderRadius: 12,
   },
-
-  meta: {
-    padding: spacing.sm,
-    gap: 8,
-  },
-
-  lineShort: {
-    height: 10,
-    width: '45%',
-    borderRadius: 6,
-    backgroundColor: '#e5e7eb',
-  },
-
-  colors: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#e5e7eb',
+  cat: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    width: 60,
+    height: 14,
+    borderRadius: 4,
   },
 })

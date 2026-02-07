@@ -29,9 +29,21 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true)
 
     if (allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+
+    // Allow any local network IP for mobile dev
+    // Matches 192.168.x.x, 10.x.x.x, 172.x.x.x
+    if (
+      origin.startsWith('http://192.168.') ||
+      origin.startsWith('http://10.') ||
+      origin.startsWith('http://172.') ||
+      origin.startsWith('exp://')
+    ) {
       return callback(null, true)
     }
 

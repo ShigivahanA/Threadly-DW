@@ -1,9 +1,9 @@
-import { View, TextInput, Pressable, StyleSheet } from 'react-native'
+import { View, TextInput, Pressable, StyleSheet, Text, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useState } from 'react'
 import { lightColors, darkColors } from '../../theme/colors'
-import { spacing } from '../../theme/spacing'
 import { useTheme } from '@/src/theme/ThemeProvider'
+import { FONTS } from '@/src/theme/fonts'
 
 type Props = {
   value: string
@@ -11,7 +11,11 @@ type Props = {
   placeholder?: string
   keyboardType?: any
   maxLength?: number
+  label?: string
+  style?: any
 }
+
+const MONO = FONTS.mono
 
 export default function SecureInput({
   value,
@@ -19,62 +23,81 @@ export default function SecureInput({
   placeholder,
   keyboardType,
   maxLength,
+  label,
+  style,
 }: Props) {
   const { theme } = useTheme()
   const colors = theme === 'dark' ? darkColors : lightColors
   const [visible, setVisible] = useState(false)
 
   return (
-    <View style={styles.wrap}>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={colors.textSecondary}
-        secureTextEntry={!visible}
-        keyboardType={keyboardType}
-        maxLength={maxLength}
-        style={[
-          styles.input,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            color: colors.textPrimary,
-          },
-        ]}
-      />
+    <View style={styles.container}>
+      {label && (
+        <Text style={[styles.label, { color: theme === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }]}>
+          // {label.toUpperCase()}
+        </Text>
+      )}
 
-      <Pressable
-        onPress={() => setVisible(v => !v)}
-        hitSlop={12}
-        style={styles.eye}
-      >
-        <Ionicons
-          name={visible ? 'eye-off' : 'eye'}
-          size={18}
-          color={colors.textSecondary}
+      <View style={styles.inputWrap}>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'}
+          secureTextEntry={!visible}
+          keyboardType={keyboardType}
+          maxLength={maxLength}
+          style={[
+            styles.input,
+            {
+              backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
+              color: colors.textPrimary,
+            },
+            style,
+          ]}
         />
-      </Pressable>
+
+        <Pressable
+          onPress={() => setVisible(v => !v)}
+          hitSlop={12}
+          style={styles.eye}
+        >
+          <Ionicons
+            name={visible ? 'eye-off' : 'eye'}
+            size={20}
+            color={theme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'}
+          />
+        </Pressable>
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  wrap: {
+  container: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 10,
+    fontFamily: MONO,
+    fontWeight: '700',
+    marginBottom: 8,
+    letterSpacing: 1,
+  },
+  inputWrap: {
     position: 'relative',
+    justifyContent: 'center',
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    paddingRight: 44, // room for eye
-    fontSize: 16,
+    height: 52,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingRight: 48, // Room for eye icon
+    fontSize: 14,
+    fontFamily: MONO,
   },
   eye: {
     position: 'absolute',
-    right: 14,
-    top: '50%',
-    transform: [{ translateY: -9 }],
+    right: 16,
   },
 })

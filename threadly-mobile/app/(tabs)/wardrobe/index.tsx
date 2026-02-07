@@ -4,9 +4,10 @@ import {
   StyleSheet,
   FlatList,
   Dimensions,
+  RefreshControl,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { FadeIn } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
 import { useToast } from '@/src/components/Toast/ToastProvider'
 import wardrobeService from '@/src/services/wardrobeService'
 import WardrobeHeader from '@/src/components/wardrobe/WardrobeHeader'
@@ -31,96 +32,116 @@ export default function WardrobeScreen() {
 
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [category, setCategory] = useState<string | null>(null)
 
-  const loadItems = async () => {
+  const loadItems = async (isRef = false) => {
     try {
-      setLoading(true)
+      if (isRef) setRefreshing(true)
+      else if (items.length === 0) setLoading(true)
+
       const query = category ? `?category=${category}` : ''
       const data = await wardrobeService.getItems(query)
       setItems(data?.items ?? [])
     } catch {
       toast.show('Failed to load wardrobe', 'error')
-      setItems([])
+      if (items.length === 0) setItems([])
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
-const toggleFavorite = async (id: string) => {
-  try {
-    const res = await wardrobeService.toggleFavorite(id)
+  const handleManualRefresh = () => {
+    toast.show('Recalibrating archive...', 'info')
+    loadItems(false)
+  }
 
-    setItems((prev) =>
-      prev.map((i) =>
-        i._id === id ? { ...i, isFavorite: res.isFavorite } : i
+  const toggleFavorite = async (id: string) => {
+    try {
+      const res = await wardrobeService.toggleFavorite(id)
+
+      setItems((prev) =>
+        prev.map((i) =>
+          i._id === id ? { ...i, isFavorite: res.isFavorite } : i
+        )
       )
-    )
 
-    toast.show(
-      res.isFavorite ? 'Added to favourites' : 'Removed from favourites',
-      'success'
-    )
-  } catch {
-    toast.show('Could not update favourite', 'error')
+      toast.show(
+        res.isFavorite ? 'Added to favourites' : 'Removed from favourites',
+        'success'
+      )
+    } catch {
+      toast.show('Could not update favourite', 'error')
+    }
   }
-}
 
 
-useEffect(() => {
-  if (category) {
-    toast.show(`Filtering by ${category}`, 'info')
-  }
-  loadItems()
-}, [category])
+  useEffect(() => {
+    if (category) {
+      toast.show(`Filtering by ${category}`, 'info')
+    }
+    loadItems()
+  }, [category])
 
 
   return (
-  <FlatList
-    data={items}
-    keyExtractor={(item) => item._id}
-    numColumns={2}
-    showsVerticalScrollIndicator={false}
-    columnWrapperStyle={styles.row}
-    contentContainerStyle={[
-      styles.list,
-      {
-        flexGrow: 1, // ✅ REQUIRED for full-height empty state
-        paddingTop: insets.top + spacing.sm,
-        paddingBottom:
-          insets.bottom + TAB_BAR_HEIGHT + spacing.lg,
-        backgroundColor: colors.background,
-      },
-    ]}
-    ListHeaderComponent={
-      <View style={styles.header}>
-        <WardrobeHeader count={items.length} />
-
-        <WardrobeFilters
-          value={category}
-          onChange={setCategory}
-          onReset={() => setCategory(null)}
+    <FlatList
+      data={items}
+      keyExtractor={(item) => item._id}
+      numColumns={2}
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => loadItems(true)}
+          tintColor={colors.textPrimary}
+          title="// RECALIBRATING_ARCHIVE..."
+          titleColor={colors.textSecondary}
+          progressBackgroundColor={colors.surface}
+          colors={[colors.textPrimary]} // Android spinner colors
         />
+      }
+      columnWrapperStyle={styles.row}
+      contentContainerStyle={[
+        styles.list,
+        {
+          flexGrow: 1, // ✅ REQUIRED for full-height empty state
+          paddingTop: insets.top + spacing.sm,
+          paddingBottom:
+            insets.bottom + TAB_BAR_HEIGHT + spacing.lg,
+          backgroundColor: colors.background,
+        },
+      ]}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <WardrobeHeader count={items.length} onRefresh={handleManualRefresh} />
 
-        {loading && items.length === 0 && <WardrobeSkeleton />}
-      </View>
-    }
-    ListEmptyComponent={
-      !loading ? (
-        <EmptyState onReset={() => setCategory(null)} />
-      ) : null
-    }
-    renderItem={({ item }) => (
-      <Animated.View entering={FadeIn.duration(200)}>
-        <WardrobeCard
-          item={item}
-          width={CARD_WIDTH}
-          onToggleFavorite={toggleFavorite}
-        />
-      </Animated.View>
-    )}
-  />
-)
+          <WardrobeFilters
+            value={category}
+            onChange={setCategory}
+            onReset={() => setCategory(null)}
+          />
+
+          {loading && items.length === 0 && <WardrobeSkeleton />}
+        </View>
+      }
+      ListEmptyComponent={
+        !loading ? (
+          <EmptyState onReset={() => setCategory(null)} />
+        ) : null
+      }
+      renderItem={({ item, index }) => (
+        <Animated.View entering={FadeInDown.delay(index % 6 * 100)}>
+          <WardrobeCard
+            item={item}
+            width={CARD_WIDTH}
+            onToggleFavorite={toggleFavorite}
+          />
+        </Animated.View>
+      )}
+    />
+  )
 }
 
 const styles = StyleSheet.create({

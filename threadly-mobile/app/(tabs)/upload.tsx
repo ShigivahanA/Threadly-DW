@@ -1,38 +1,27 @@
-import { View, Text, StyleSheet, Image } from 'react-native'
+import { View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { useState } from 'react'
-import { useColorScheme } from 'react-native'
-import { SafeAreaView,useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as ImagePicker from 'expo-image-picker'
 import * as Haptics from 'expo-haptics'
-import Animated, { FadeInUp } from 'react-native-reanimated'
-import { ScrollView } from 'react-native'
-import { lightColors, darkColors } from '../../src/theme/colors'
-import { spacing } from '../../src/theme/spacing'
-import { typography } from '../../src/theme/typography'
-import { useToast } from '@/src/components/Toast/ToastProvider'
-import PrimaryButton from '../../src/components/auth/PrimaryButton'
-import MetadataForm from '../../src/components/upload/MetadataForm'
-import { getUploadSignature, uploadToCloudinary } from '../../src/services/uploadService'
-import wardrobeService from '../../src/services/wardrobeService'
-import type { WardrobeCategory,WardrobeSeason,WardrobeOccasion } from '../../src/services/wardrobeService'
-import ImageStage from '@/src/components/upload/ImageStage'
+import Animated, { FadeIn, FadeOut, FadeInDown, FadeInUp, Layout } from 'react-native-reanimated'
+import { Ionicons } from '@expo/vector-icons'
+import { BlurView } from 'expo-blur'
+import { normalize } from '@/src/utils/responsive'
+
 import { useTheme } from '@/src/theme/ThemeProvider'
+import { lightColors, darkColors } from '@/src/theme/colors'
+import { spacing } from '@/src/theme/spacing'
+import { typography } from '@/src/theme/typography'
+import { useToast } from '@/src/components/Toast/ToastProvider'
+
+import PrimaryButton from '@/src/components/auth/PrimaryButton'
+import MetadataForm, { UploadMetaDraft } from '@/src/components/upload/MetadataForm'
+import ImageStage from '@/src/components/upload/ImageStage'
 import ExtractedColors from '@/src/components/upload/ExtractedColors'
 import ManualColorPicker from '@/src/components/upload/ManualColorPicker'
 
-type UploadMetaDraft = {
-  category: WardrobeCategory | null
-  size: string
-  colors: string[]
-  brand: string
-  occasion: WardrobeOccasion[]   // ✅ array
-  season: WardrobeSeason[]       // ✅ array
-  isFavorite: boolean
-  tags: string[]
-  notes: string
-}
-
-
+import { getUploadSignature, uploadToCloudinary } from '@/src/services/uploadService'
+import wardrobeService from '@/src/services/wardrobeService'
 
 export default function UploadScreen() {
   const toast = useToast()
@@ -40,6 +29,8 @@ export default function UploadScreen() {
   const TAB_BAR_HEIGHT = 64
   const { theme } = useTheme()
   const colors = theme === 'dark' ? darkColors : lightColors
+
+  // -- State --
   const [showColorPicker, setShowColorPicker] = useState(false)
   const [image, setImage] = useState<string | null>(null)
   const [uploaded, setUploaded] = useState<any>(null)
@@ -57,138 +48,113 @@ export default function UploadScreen() {
     notes: '',
   })
 
+  // -- Permissions --
   const ensureGalleryPermission = async () => {
-  const { status } =
-    await ImagePicker.requestMediaLibraryPermissionsAsync()
-
-  if (status !== 'granted') {
-    throw new Error('Gallery permission not granted')
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') throw new Error('Gallery permission not granted')
   }
-}
 
-const ensureCameraPermission = async () => {
-  const { status } =
-    await ImagePicker.requestCameraPermissionsAsync()
-
-  if (status !== 'granted') {
-    throw new Error('Camera permission not granted')
+  const ensureCameraPermission = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync()
+    if (status !== 'granted') throw new Error('Camera permission not granted')
   }
-}
 
-  /* Pick image */
- const pickFromGallery = async () => {
-  try {
-    await ensureGalleryPermission()
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,     // ✅ enables crop
-      quality: 0.9,
-    })
-
-    if (!result.canceled) {
-      Haptics.selectionAsync()
-      setImage(result.assets[0].uri)
-      setUploaded(null)
+  // -- Pickers --
+  const pickFromGallery = async () => {
+    try {
+      await ensureGalleryPermission()
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.9,
+      })
+      if (!result.canceled) {
+        Haptics.selectionAsync()
+        setImage(result.assets[0].uri)
+        setUploaded(null)
+      }
+    } catch {
+      toast.show('Gallery permission denied', 'error')
     }
-  } catch {
-    toast.show('Gallery permission denied', 'error')
   }
-}
 
-
-const pickFromCamera = async () => {
-  try {
-    await ensureCameraPermission()
-
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 0.9,
-      allowsEditing: true,
-    })
-
-    if (!result.canceled) {
-      Haptics.selectionAsync()
-      setImage(result.assets[0].uri)
-      setUploaded(null)
+  const pickFromCamera = async () => {
+    try {
+      await ensureCameraPermission()
+      const result = await ImagePicker.launchCameraAsync({
+        quality: 0.9,
+        allowsEditing: true,
+        exif: true,
+      })
+      if (!result.canceled) {
+        Haptics.selectionAsync()
+        setImage(result.assets[0].uri)
+        setUploaded(null)
+      }
+    } catch {
+      toast.show('Camera permission denied', 'error')
     }
-  } catch {
-    toast.show('Camera permission denied', 'error')
   }
-}
 
-
-  /* Upload */
+  // -- Upload --
   const handleUpload = async () => {
-  if (!image) return
+    if (!image) return
+    try {
+      setLoading(true)
+      const signature = await getUploadSignature()
+      const result = await uploadToCloudinary(image, signature)
 
-  try {
-    setLoading(true)
-    const signature = await getUploadSignature()
-    const result = await uploadToCloudinary(image, signature)
+      const extractedColors = result?.colors?.map((c: [string, number]) => c[0]) ?? []
 
+      setUploaded({
+        url: result.secure_url,
+        publicId: result.public_id,
+      })
 
-    const extractedColors =
-      result?.colors?.map((c: [string, number]) => c[0]) ?? []
+      setMeta(prev => ({
+        ...prev,
+        colors: extractedColors,
+      }))
 
-    setUploaded({
-      url: result.secure_url,
-      publicId: result.public_id,
-    })
-
-    // ✅ inject extracted colors into metadata
-    setMeta(prev => ({
-      ...prev,
-      colors: extractedColors,
-    }))
-
-    Haptics.notificationAsync(
-      Haptics.NotificationFeedbackType.Success
-    )
-  } catch (e: any) {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-    toast.show('Upload failed', 'error')
-  } finally {
-    setLoading(false)
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    } catch (e: any) {
+      toast.show('Upload failed', 'error')
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
-  /* Save */
+  // -- Save --
   const handleSave = async () => {
-  if (!uploaded || !meta.category) {
-    Haptics.notificationAsync(
-      Haptics.NotificationFeedbackType.Error
-    )
-    toast.show('Missing details', 'error')
-    return
+    if (!uploaded || !meta.category) {
+      toast.show('Category required', 'error')
+      return
+    }
+
+    try {
+      setLoading(true)
+      await wardrobeService.addItem({
+        imageUrl: uploaded.url,
+        imagePublicId: uploaded.publicId,
+        category: meta.category,
+        size: meta.size || undefined,
+        colors: meta.colors,
+        brand: meta.brand || undefined,
+        occasion: meta.occasion,
+        season: meta.season,
+        isFavorite: meta.isFavorite,
+        tags: meta.tags,
+        notes: meta.notes || undefined,
+      })
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      toast.show('Artifact archived', 'success')
+      reset()
+    } catch {
+      toast.show('Archival failed', 'error')
+    } finally {
+      setLoading(false)
+    }
   }
-
-  try {
-    setLoading(true)
-
-    await wardrobeService.addItem({
-      imageUrl: uploaded.url,
-      imagePublicId: uploaded.publicId,
-      category: meta.category,      // ✅ now guaranteed
-      size: meta.size || undefined,
-      colors: meta.colors,
-      brand: meta.brand || undefined,
-      occasion: meta.occasion,
-      season: meta.season,
-      isFavorite: meta.isFavorite,
-      tags: meta.tags,
-      notes: meta.notes || undefined,
-    })
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-    toast.show('Item added to wardrobe', 'success')
-    reset()
-  } catch {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-    toast.show('Could not save item', 'error')
-  } finally {
-    setLoading(false)
-  }
-}
-
 
   const reset = () => {
     setImage(null)
@@ -207,11 +173,9 @@ const pickFromCamera = async () => {
   }
 
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.safe, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
+    <SafeAreaView edges={['top']} style={[styles.safe, { backgroundColor: colors.background }]}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <ScrollView
           contentContainerStyle={[
             styles.container,
             { paddingBottom: spacing.xl + insets.bottom + TAB_BAR_HEIGHT },
@@ -219,147 +183,144 @@ const pickFromCamera = async () => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* --- Header --- */}
+          <Animated.View entering={FadeInDown.duration(600)} style={styles.header}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>INGEST</Text>
+            <View style={styles.subtitleRow}>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                   // NEW_ENTRY_PROTOCOL
+              </Text>
+              <View style={[styles.blinkDot, { backgroundColor: colors.accent }]} />
+            </View>
+          </Animated.View>
 
-        {/* Header */}
-        <Animated.View entering={FadeInUp.duration(400)}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
-            Add to wardrobe
-          </Text>
-          <Text
-            style={[
-              styles.subtitle,
-              {
-                color:
-                  theme === 'dark'
-                    ? colors.textSecondary
-                    : colors.textSecondary,
-                opacity: theme === 'dark' ? 0.9 : 0.75,
-              },
-            ]}
-          >
-            Upload and describe your clothing item
-          </Text>
-        </Animated.View>
+          {/* --- Image Stage --- */}
+          <Animated.View entering={FadeInDown.delay(100).duration(600)} style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>// SOURCE_MEDIA</Text>
+          </Animated.View>
 
-        {/* Image card */}
-        <Animated.View entering={FadeInUp.delay(120)}>
-          <View
-            style={[
-              styles.heroCard,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-          >
+          <View style={[styles.stageCard, { borderColor: colors.border, backgroundColor: colors.surface }]}>
             <ImageStage
               image={image}
-  uploaded={uploaded}
-  loading={loading}
-  onPickCamera={pickFromCamera}
-  onPickGallery={pickFromGallery}
-  onUpload={handleUpload}
-  onRemove={reset}
+              uploaded={uploaded}
+              loading={loading}
+              onPickCamera={pickFromCamera}
+              onPickGallery={pickFromGallery}
+              onUpload={handleUpload}
+              onRemove={reset}
             />
           </View>
-        </Animated.View>
 
-        {/* Metadata */}
-        {uploaded && (
-          <Animated.View
-              entering={FadeInUp
-                .delay(200)
-                .duration(400)
-                .springify()
-                .damping(14)}
-            >
+          {/* --- Classification Form --- */}
+          {uploaded && (
+            <Animated.View entering={FadeInDown.delay(100).duration(500)}>
 
-              <View style={styles.colorsSection}>
-                  <ExtractedColors
-                    colors={meta.colors}
-                    onRemove={(color) =>
-                      setMeta({
-                        ...meta,
-                        colors: meta.colors.filter(c => c !== color),
-                      })
-                    }
-                    onManualPick={() => {setShowColorPicker(true)
-                      // open manual picker modal (next step)
-                    }}
-                  />
-                  {showColorPicker && (
-  <ManualColorPicker
-    selected={meta.colors}
-    onSelect={(color) => {
-      setMeta(prev => ({
-        ...prev,
-        colors: prev.colors.includes(color)
-          ? prev.colors.filter(c => c !== color)
-          : [...prev.colors, color],
-      }))
-    }}
-  />
-)}
-                </View>
+              <View style={[styles.sectionHeader, { marginTop: 32 }]}>
+                <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>// ARTIFACT_DATA</Text>
+              </View>
 
-              {/* Metadata */}
-              <View style={[styles.card, {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-    },]}>
+              {/* Colors */}
+              <View style={[styles.module, { borderColor: colors.border, marginBottom: 20, padding: 16, gap: 16 }]}>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>DETECTED_SPECTRUM</Text>
+
+                <ExtractedColors
+                  colors={meta.colors}
+                  onRemove={(color) => setMeta(p => ({ ...p, colors: p.colors.filter(c => c !== color) }))}
+                  onManualPick={() => setShowColorPicker(true)}
+                />
+
+                {showColorPicker && (
+                  <Animated.View entering={FadeIn} exiting={FadeOut}>
+                    <ManualColorPicker
+                      selected={meta.colors}
+                      onClose={() => setShowColorPicker(false)}
+                      onSelect={(color) => setMeta(p => ({
+                        ...p,
+                        colors: p.colors.includes(color) ? p.colors.filter(c => c !== color) : [...p.colors, color]
+                      }))}
+                    />
+                  </Animated.View>
+                )}
+              </View>
+
+              {/* Form Fields */}
+              <View style={[styles.module, { borderColor: colors.border, padding: 16 }]}>
                 <MetadataForm meta={meta} setMeta={setMeta} />
 
-                <PrimaryButton
-                  title="Save to wardrobe"
-                  loading={loading}
-                  onPress={handleSave}
-                />
+                <View style={{ marginTop: 24 }}>
+                  <PrimaryButton
+                    title="CONFIRM ARCHIVAL"
+                    loading={loading}
+                    onPress={handleSave}
+                  />
+                </View>
               </View>
+
             </Animated.View>
           )}
-      </ScrollView>
+
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  
   safe: { flex: 1 },
   container: {
-  padding: spacing.xl,
-},
-  title: { ...typography.title },
-  subtitle: { marginTop: spacing.xs, ...typography.subtitle },
- card: {
-  marginTop: spacing.xl,
-  padding: spacing.lg,
-  borderRadius: 20,
-  borderWidth: 1,
-  gap: spacing.lg,
-  backgroundColor: 'transparent',
-  // iOS
-  shadowColor: '#000',
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  shadowOffset: { width: 0, height: 6 },
-
-  // Android
-  // elevation: 3,
-},
-  image: {
-    width: '100%',
-    height: 240,
-    borderRadius: 12,
+    padding: spacing.xl,
   },
-  heroCard: {
-  marginTop: spacing.lg,
-  padding: spacing.md,
-  borderRadius: 20,
-  borderWidth: 1,
-},
-colorsSection: {
-  marginTop: spacing.lg,
-  marginBottom: spacing.md,
-},
-
+  header: {
+    marginBottom: 32,
+    paddingTop: 8,
+  },
+  title: {
+    fontSize: normalize(36),
+    fontWeight: '900',
+    letterSpacing: -1,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  subtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  subtitle: {
+    fontSize: normalize(11),
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontWeight: '500',
+    letterSpacing: 0.5,
+  },
+  blinkDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  sectionHeader: {
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: normalize(10),
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  stageCard: {
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 6,
+  },
+  module: {
+    borderWidth: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  label: {
+    fontSize: normalize(10),
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontWeight: '700',
+    marginBottom: 8,
+  }
 })

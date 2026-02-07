@@ -7,11 +7,16 @@ import {
   StyleSheet,
   Alert,
   ScrollView,
+  Platform,
+  ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
+import Animated, { FadeInDown, Layout, FadeIn, FadeOut } from 'react-native-reanimated'
+import { BlurView } from 'expo-blur'
+import { normalize } from '@/src/utils/responsive'
 
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { lightColors, darkColors } from '@/src/theme/colors'
@@ -26,72 +31,114 @@ import OtpInput from '@/src/components/auth/OtpInput'
 import SecureInput from '@/src/components/auth/SecureInput'
 import AccountSkeleton from '@/src/components/Profile/AccountSkeleton'
 
-
-
 export default function AccountScreen() {
   const router = useRouter()
   const { theme } = useTheme()
   const colors = theme === 'dark' ? darkColors : lightColors
   const toast = useToast()
+
+  // -- State --
   const [exporting, setExporting] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [sessions, setSessions] = useState<any[]>([])
+
   const [pwStep, setPwStep] = useState<'idle' | 'otp' | 'change'>('idle')
   const [pwLoading, setPwLoading] = useState(false)
-
   const [otp, setOtp] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
+  const [showSessions, setShowSessions] = useState(false)
 
   /* ---------------- Load profile ---------------- */
   useEffect(() => {
     let mounted = true
-
     const load = async () => {
       try {
         const res = await profileService.getProfile()
         if (!mounted) return
-
         setName(res.name)
         setEmail(res.email)
         setSessions(res.sessions || [])
       } catch {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-        toast.show('Failed to load profile', 'error')
+        toast.show('Failed to load identity', 'error')
       } finally {
         mounted && setLoading(false)
       }
     }
-
     load()
-    return () => {
-      mounted = false
-    }
+    return () => { mounted = false }
   }, [])
 
-  /* ---------------- Save profile ---------------- */
+  /* ---------------- Actions ---------------- */
   const saveProfile = async () => {
     if (!name.trim()) return
     setSaving(true)
-
     try {
       await profileService.updateProfile({ name })
-      Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Success
-      )
-      toast.show('Profile updated successfully', 'success')
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      toast.show('Identity updated', 'success')
     } catch {
-      Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Error
-      )
-      toast.show('Failed to update profile', 'error')
+      toast.show('Update failed', 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const terminateSession = async (id: string) => {
+    try {
+      await profileService.terminateSession(id)
+      setSessions(prev => prev.filter(s => s.id !== id))
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    } catch {
+      toast.show('Failed to revoke access', 'error')
+    }
+  }
+
+  const deleteAccount = async () => {
+    Alert.alert('REVOKE IDENTITY?', 'This action is irreversible.', [
+      { text: 'CANCEL', style: 'cancel' },
+      {
+        text: 'DELETE',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await profileService.deleteAccount()
+            try { await logout() } catch (e) { }
+            router.replace('/')
+          } catch {
+            toast.show('Failed to delete account', 'error')
+          }
+        },
+      },
+    ])
+  }
+
+  const handleExportData = async () => {
+    if (exporting) return
+    setExporting(true)
+    try {
+      await profileService.exportData()
+      Alert.alert("DATA EXPORT", "Your archive is being prepared and will be emailed shortly.")
+    } catch {
+      toast.show('Export failed', 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await logout()
+    } catch {
+      // Ignore server error, local tokens are cleared
+    } finally {
+      router.replace('/')
     }
   }
 
@@ -103,572 +150,256 @@ export default function AccountScreen() {
     setConfirmPassword('')
   }
 
-  /* ---------------- Terminate session ---------------- */
-  const terminateSession = async (id: string) => {
-    try {
-      await profileService.terminateSession(id)
-      setSessions(prev => prev.filter(s => s.id !== id))
-    } catch {
-      toast.show('Failed to terminate session', 'error')
-    }
-  }
-
-  /* ---------------- Delete account ---------------- */
-  const deleteAccount = async () => {
-    toast.show('Deleting account...', 'info')
-    Alert.alert(
-      'Delete account',
-      'This action is permanent.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await profileService.deleteAccount()
-            await logout()
-          },
-        },
-      ]
-    )
-  }
-
-  const handleExportData = async () => {
-    if (exporting) return
-
-    setExporting(true)
-    toast.show('Preparing your data export…', 'info')
-
-    try {
-      await profileService.exportData()
-
-      toast.show(
-        'Your data export has started. You’ll receive an email shortly.',
-        'success'
-      )
-    } catch {
-      toast.show('Failed to export data', 'error')
-    } finally {
-      setExporting(false)
-    }
-  }
-
-
-  const handleLogout = async () => {
-  toast.show('Signing out...', 'info')
-
-  try {
-    await logout()
-    toast.show('Signed out successfully', 'success')
-    router.replace('/')
-  } catch {
-    toast.show('Logout failed', 'error')
-  }
-}
-
-
-  if (loading) {
-    return <AccountSkeleton />
-  }
+  if (loading) return <AccountSkeleton />
 
   return (
-    <SafeAreaView
-      style={[
-        styles.safe,
-        { backgroundColor: colors.background },
-      ]}
-    >
-      {/* ---------- Header ---------- */}
-      <View style={styles.header}>
-              <ProfileHeader loading={loading} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+
+        <View style={styles.header}>
+          <ProfileHeader loading={loading} />
         </View>
-      {/* ---------- Content ---------- */}
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingBottom:
-              spacing.xxl + 80, // room for floating pill bar
-          },
-        ]}
-      >
-        <Card colors={colors}>
-          <Field label="Name" colors={colors}>
+
+        <Animated.View entering={FadeInDown.duration(600)} style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>// IDENTITY_CONFIG</Text>
+        </Animated.View>
+
+        {/* --- Profile Module --- */}
+        <Animated.View entering={FadeInDown.delay(100).duration(600)} style={[styles.module, { borderColor: colors.border }]}>
+          <View style={styles.row}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>NAME</Text>
             <TextInput
               value={name}
               onChangeText={setName}
-              style={[
-                styles.input,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  color: colors.textPrimary,
-                },
-              ]}
+              style={[styles.input, { color: colors.textPrimary }]}
             />
-          </Field>
+          </View>
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={styles.row}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>EMAIL</Text>
+            <Text style={[styles.value, { color: colors.textSecondary }]}>{email}</Text>
+          </View>
+          <View style={{ padding: 16 }}>
+            <PrimaryButton title="UPDATE IDENTITY" onPress={saveProfile} loading={saving} />
+          </View>
+        </Animated.View>
 
-          <Field label="Email" colors={colors}>
-            <Text style={{ color: colors.textSecondary }}>
-              {email}
-            </Text>
-          </Field>
+        {/* --- Security Module --- */}
+        <Animated.View entering={FadeInDown.delay(200).duration(600)}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary, marginBottom: 8, marginTop: 24 }]}>// SECURITY_PROTOCOLS</Text>
 
-          <PrimaryButton
-            title="Save changes"
-            onPress={saveProfile}
-            loading={saving}
-          />
-        </Card>
-
-        <Card colors={colors} title="Active sessions">
-          {sessions.length === 0 ? (
-            <Text style={{ color: colors.textSecondary }}>
-              This is your only session.
-            </Text>
-          ) : (
-            sessions.map(s => (
-              <View
-                key={s.id}
-                style={[
-                  styles.session,
-                  { borderColor: colors.border },
-                ]}
-              >
-                <View>
-                  <Text style={{ color: colors.textPrimary }}>
-                    {s.device || 'Unknown device'}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: colors.textSecondary,
-                    }}
-                  >
-                    {s.ip}
-                  </Text>
-                </View>
-
-                <Pressable
-                  onPress={() => terminateSession(s.id)}
-                >
-                  <Text style={{ color: '#ff4d4f' }}>
-                    Log out
-                  </Text>
-                </Pressable>
+          {/* Main Container - Animates Layout Changes */}
+          <Animated.View
+            layout={Layout.duration(300)}
+            style={[styles.module, { borderColor: colors.border }]}
+          >
+            {/* Expandable Sessions Header */}
+            <Pressable onPress={() => setShowSessions(!showSessions)} style={styles.actionRow}>
+              <View style={styles.actionLeft}>
+                <Ionicons name="desktop-outline" size={18} color={colors.textPrimary} />
+                <Text style={[styles.actionText, { color: colors.textPrimary }]}>ACTIVE SESSIONS ({sessions.length})</Text>
               </View>
-            ))
-          )}
-        </Card>
+              <Ionicons name={showSessions ? "chevron-up" : "chevron-down"} size={16} color={colors.textSecondary} />
+            </Pressable>
 
-        <Card colors={colors} title="Your data">
-  <Pressable
-    onPress={handleExportData}
-    disabled={exporting}
-    style={({ pressed }) => [
-      styles.exportRow,
-      {
-        backgroundColor: colors.surface,
-        borderColor: colors.border,
-        opacity: exporting ? 0.6 : pressed ? 0.85 : 1,
-      },
-    ]}
-  >
-    <View style={styles.exportLeft}>
-      <Ionicons
-        name="download-outline"
-        size={18}
-        color={colors.textPrimary}
-      />
-      <Text
-        style={[
-          styles.exportText,
-          { color: colors.textPrimary },
-        ]}
-      >
-        Export my data
-      </Text>
-    </View>
+            {/* Expandable Sessions Body */}
+            {showSessions && (
+              <Animated.View
+                entering={FadeInDown.duration(300)}
+                exiting={FadeOut.duration(200)}
+              >
+                {sessions.map(s => (
+                  <View key={s.id} style={[styles.sessionRow, { borderTopColor: colors.border }]}>
+                    <View>
+                      <Text style={[styles.deviceText, { color: colors.textPrimary }]}>{s.device || 'Unknown Device'}</Text>
+                      <Text style={[styles.ipText, { color: colors.textSecondary }]}>{s.ip}</Text>
+                    </View>
+                    <Pressable onPress={() => terminateSession(s.id)}>
+                      <Text style={styles.revokeText}>REVOKE</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </Animated.View>
+            )}
 
-    {exporting ? (
-      <Text
-        style={{
-          fontSize: 12,
-          color: colors.textSecondary,
-        }}
-      >
-        Preparing…
-      </Text>
-    ) : (
-      <Ionicons
-        name="chevron-forward"
-        size={16}
-        color={colors.textSecondary}
-      />
-    )}
-  </Pressable>
-</Card>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
+            {/* Password Flow */}
+            <View style={{ padding: 16 }}>
+              {pwStep === 'idle' && (
+                <Animated.View entering={FadeIn.duration(300)} exiting={FadeOut.duration(200)}>
+                  <Pressable
+                    onPress={async () => {
+                      setPwLoading(true)
+                      try { await profileService.requestPasswordOtp(); setPwStep('otp'); toast.show('OTP sent', 'success') }
+                      catch { toast.show('Failed to send OTP', 'error') }
+                      finally { setPwLoading(false) }
+                    }}
+                    disabled={pwLoading}
+                    style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: 24 }}
+                  >
+                    <View style={styles.actionLeft}>
+                      <Ionicons name="key-outline" size={18} color={colors.textPrimary} />
+                      <Text style={[styles.actionText, { color: colors.textPrimary }]}>CHANGE PASSWORD</Text>
+                    </View>
+                    {pwLoading ? <ActivityIndicator size="small" color={colors.textSecondary} /> : <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />}
+                  </Pressable>
+                </Animated.View>
+              )}
 
-        <Card colors={colors} title="Security">
-  {/* STEP 1 — Idle */}
-  {pwStep === 'idle' && (
-    <>
-      <Text style={{ color: colors.textSecondary }}>
-        Change your password securely using email verification.
-      </Text>
+              {pwStep === 'otp' && (
+                <Animated.View entering={FadeIn.duration(400).delay(100)}>
+                  <Text style={[styles.stepTitle, { color: colors.textSecondary }]}>ENTER VERIFICATION CODE</Text>
+                  <OtpInput value={otp} onChange={setOtp} onComplete={() => { }} error={false} />
+                  <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                    <View style={{ flex: 1 }}><PrimaryButton title="VERIFY CODE" onPress={() => setPwStep('change')} disabled={otp.length !== 6} /></View>
+                    <Pressable onPress={resetPasswordFlow} style={styles.cancelBtn}><Text style={[styles.cancelText, { color: colors.textSecondary }]}>CANCEL</Text></Pressable>
+                  </View>
+                </Animated.View>
+              )}
 
-      <PrimaryButton
-        title="Change password"
-        loading={pwLoading}
-        onPress={async () => {
-          setPwLoading(true)
-          try {
-            await profileService.requestPasswordOtp()
-            setPwStep('otp')
-            toast.show('OTP sent to your email', 'success')
-          } catch {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-            toast.show('Failed to send OTP', 'error')
-          } finally {
-            setPwLoading(false)
-          }
-        }}
-      />
-    </>
-  )}
+              {pwStep === 'change' && (
+                <Animated.View entering={FadeIn.duration(400).delay(100)}>
+                  <Text style={[styles.stepTitle, { color: colors.textSecondary, textAlign: 'left', marginBottom: 16 }]}>SET NEW CREDENTIALS</Text>
+                  <View style={{ gap: 12 }}>
+                    <SecureInput value={currentPassword} onChangeText={setCurrentPassword} placeholder="Current Password" />
+                    <SecureInput value={password} onChangeText={setPassword} placeholder="New Password" />
+                    <SecureInput value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Confirm New" />
+                    <PrimaryButton title="UPDATE PASSWORD" loading={pwLoading} onPress={async () => {
+                      if (!currentPassword || !password || !confirmPassword || !otp) return toast.show('All fields required', 'error')
+                      if (password !== confirmPassword) return toast.show('Mismatch', 'error')
+                      setPwLoading(true)
+                      try {
+                        await profileService.changePassword({ currentPassword, newPassword: password, otp })
+                        toast.show('Updated. Please sign in.', 'success')
 
-  {/* STEP 2 — OTP */}
-  {pwStep === 'otp' && (
-    <>
-      <Text style={{ color: colors.textSecondary }}>
-        Enter the 6-digit code sent to your email.
-      </Text>
+                        // Clear local session; ignore server-side logout errors
+                        try {
+                          await logout()
+                        } catch (e) {
+                          // Logged out locally anyway
+                        }
 
-      <Field label="One-time password" colors={colors}>
-        <OtpInput
-            value={otp}
-            onChange={setOtp}
-            onComplete={() => {}}
-            error={false}
-          />
-      </Field>
+                        // Use a small delay to ensure toast is visible then redirect
+                        router.replace('/')
+                      } catch (err) {
+                        toast.show('Update failed', 'error')
+                      } finally {
+                        setPwLoading(false)
+                      }
+                    }} />
+                    <Pressable onPress={resetPasswordFlow} style={{ alignSelf: 'center' }}><Text style={[styles.cancelText, { color: colors.textSecondary }]}>CANCEL</Text></Pressable>
+                  </View>
+                </Animated.View>
+              )}
+            </View>
 
-      <View style={{ gap: spacing.sm, marginTop: spacing.sm }}>
-  <PrimaryButton
-    title="Verify code"
-    onPress={() => setPwStep('change')}
-    disabled={otp.length !== 6}
-  />
+          </Animated.View>
+        </Animated.View>
 
-  <Pressable
-    onPress={resetPasswordFlow}
-    hitSlop={8}
-    style={{ alignSelf: 'center' }}
-  >
-    <Text
-      style={{
-        color: colors.textSecondary,
-        textDecorationLine: 'underline',
-        fontSize: 14,
-      }}
-    >
-      Cancel
-    </Text>
-  </Pressable>
-</View>
-    </>
-  )}
+        {/* --- Data & Danger --- */}
+        <Animated.View entering={FadeInDown.delay(300).duration(600)} style={{ marginTop: 24, paddingBottom: 60 }}>
+          <Pressable onPress={handleExportData} style={[styles.module, { borderColor: colors.border, padding: 16 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={styles.actionLeft}>
+                <Ionicons name="download-outline" size={18} color={colors.textPrimary} />
+                <Text style={[styles.actionText, { color: colors.textPrimary }]}>{exporting ? "EXPORTING..." : "EXPORT DATA"}</Text>
+              </View>
+            </View>
+          </Pressable>
 
-  {/* STEP 3 — Change */}
-  {pwStep === 'change' && (
-    <>
-      <Text style={{ color: colors.textSecondary }}>
-        Confirm your current password and set a new one.
-      </Text>
-
-      <Field label="Current password" colors={colors}>
-        <SecureInput
-    value={currentPassword}
-    onChangeText={setCurrentPassword}
-  />
-      </Field>
-
-      <Field label="New password" colors={colors}>
-         <SecureInput
-            value={password}
-            onChangeText={setPassword}
-          />
-      </Field>
-
-      <Field label="Confirm new password" colors={colors}>
-        <SecureInput
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-          />
-      </Field>
-
-      <View style={{ gap: spacing.md }}>
-  <PrimaryButton
-    title="Update password"
-    loading={pwLoading}
-    onPress={async () => {
-      if (
-        !currentPassword ||
-        !password ||
-        !confirmPassword ||
-        !otp
-      ) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-        toast.show('All fields are required', 'error')
-        return
-      }
-
-      if (password !== confirmPassword) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-        toast.show('Passwords do not match', 'error')
-        return
-      }
-
-      setPwLoading(true)
-      try {
-        await profileService.changePassword({
-          currentPassword,
-          newPassword: password,
-          otp,
-        })
-        Haptics.notificationAsync(
-          Haptics.NotificationFeedbackType.Success
-        )
-        toast.show(
-          'Password updated. Please sign in again.',
-          'success'
-        )
-
-        await logout()
-      } catch (e: any) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-        toast.show(
-          e?.message || 'Password update failed',
-          'error'
-        )
-      } finally {
-        setPwLoading(false)
-      }
-    }}
-  />
-
-  <Pressable
-    onPress={resetPasswordFlow}
-    hitSlop={8}
-    style={{ alignSelf: 'center' }}
-  >
-    <Text
-      style={{
-        color: colors.textSecondary,
-        textDecorationLine: 'underline',
-        fontSize: 14,
-      }}
-    >
-      Cancel
-    </Text>
-  </Pressable>
-</View>
-    </>
-  )}
-</Card>
-
-        <Card colors={colors} danger title="Danger zone">
-  <View style={{ gap: spacing.md }}>
-
-    {/* Logout (neutral) */}
-    <Pressable
-      onPress={handleLogout}
-      hitSlop={8}
-      style={[
-        styles.dangerRow,
-        {
-          borderColor: colors.border,
-        },
-      ]}
-    >
-      <Text
-        style={[
-          styles.dangerText,
-          { color: colors.textPrimary },
-        ]}
-      >
-        Log out
-      </Text>
-    </Pressable>
-
-    {/* Delete account (destructive) */}
-    <Pressable
-      onPress={deleteAccount}
-      hitSlop={8}
-      style={[
-        styles.dangerRow,
-        {
-          backgroundColor:
-            theme === 'dark'
-              ? 'rgba(239,68,68,0.12)'
-              : 'rgba(220,38,38,0.08)',
-          borderColor: colors.danger,
-        },
-      ]}
-    >
-      <Text
-        style={[
-          styles.dangerText,
-          { color: colors.danger },
-        ]}
-      >
-        Delete account
-      </Text>
-    </Pressable>
-
-  </View>
-</Card>
+          <View style={{ marginTop: 24, gap: 12 }}>
+            <Pressable onPress={deleteAccount} style={{ alignSelf: 'center', padding: 12, marginBottom: 12 }}>
+              <Text style={[styles.deleteText, { color: colors.danger }]}>DELETE IDENTITY</Text>
+            </Pressable>
+          </View>
+        </Animated.View>
 
       </ScrollView>
     </SafeAreaView>
   )
 }
 
-/* ================= UI Components ================= */
-
-const Card = ({
-  title,
-  children,
-  colors,
-  danger,
-}: any) => (
-  <View
-    style={[
-      styles.card,
-      {
-        backgroundColor: colors.surface,
-        borderColor: danger
-          ? 'rgba(255,77,79,0.4)'
-          : colors.border,
-      },
-    ]}
-  >
-    {title && (
-      <Text
-        style={[
-          styles.cardTitle,
-          {
-            color: danger
-              ? '#ff4d4f'
-              : colors.textSecondary,
-          },
-        ]}
-      >
-        {title}
-      </Text>
-    )}
-    <View style={{ gap: spacing.md }}>{children}</View>
-  </View>
-)
-
-const Field = ({
-  label,
-  children,
-  colors,
-}: any) => (
-  <View style={{ gap: 6 }}>
-    <Text
-      style={{
-        fontSize: 12,
-        color: colors.textSecondary,
-      }}
-    >
-      {label}
-    </Text>
-    {children}
-  </View>
-)
-
-/* ================= Styles ================= */
-
 const styles = StyleSheet.create({
- safe: {
-    flex: 1,
+  scrollContent: {
+    paddingHorizontal: spacing.xl,
   },
-
   header: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
+    marginBottom: 24,
   },
-
-  content: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-    gap: spacing.lg,
+  sectionHeader: {
+    marginBottom: 12,
   },
-
-  card: {
+  sectionTitle: {
+    fontSize: normalize(10),
+    fontFamily: 'Courier',
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  module: {
     borderWidth: 1,
     borderRadius: 16,
-    padding: spacing.lg,
-    gap: spacing.md,
+    overflow: 'hidden',
   },
-
-  cardTitle: {
-    fontSize: 12,
-    letterSpacing: 1.4,
-    textTransform: 'uppercase',
+  row: {
+    padding: 16,
+    gap: 8,
   },
-
+  label: {
+    fontSize: normalize(10),
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  value: {
+    fontSize: normalize(13),
+    fontFamily: 'Courier',
+  },
   input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    fontSize: normalize(15),
+    fontFamily: 'Courier',
+    paddingVertical: 4,
   },
-
-  session: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: spacing.md,
+  divider: {
+    height: 1,
+    width: '100%',
+  },
+  actionRow: {
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  dangerRow: {
-  height: 52,
-  borderRadius: 12,
-  borderWidth: 1,
-  alignItems: 'center',
-  justifyContent: 'center',
-},
-
-dangerText: {
-  fontSize: 15,
-  fontWeight: '500',
-},
-exportRow: {
-  height: 52,
-  borderRadius: 12,
-  borderWidth: 1,
-  paddingHorizontal: spacing.md,
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-},
-
-exportLeft: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: spacing.sm,
-},
-
-exportText: {
-  fontSize: 15,
-  fontWeight: '500',
-},
-
+  actionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  actionText: {
+    fontSize: normalize(13),
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  sessionRow: {
+    padding: 16,
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.02)',
+  },
+  deviceText: { fontSize: normalize(13), fontWeight: '500' },
+  ipText: { fontSize: normalize(11), fontFamily: 'Courier' },
+  revokeText: { fontSize: normalize(9), fontWeight: '700', color: '#ff4d4f', letterSpacing: 1 },
+  stepTitle: { fontSize: normalize(11), marginBottom: 12, textAlign: 'center' },
+  cancelBtn: { justifyContent: 'center', paddingHorizontal: 16 },
+  cancelText: { fontSize: normalize(11), textDecorationLine: 'underline' },
+  dangerBtn: {
+    height: 52,
+    borderWidth: 1,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dangerText: { fontSize: normalize(13), fontWeight: '600' },
+  deleteText: { fontSize: normalize(11), fontWeight: '700', letterSpacing: 1 },
 })

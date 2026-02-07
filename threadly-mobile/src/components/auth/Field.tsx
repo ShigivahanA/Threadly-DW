@@ -1,11 +1,11 @@
-import { View, Text, TextInput, StyleSheet } from 'react-native'
-import { useColorScheme } from 'react-native'
+import { View, Text, TextInput, StyleSheet, Platform } from 'react-native'
 import type { TextInputProps } from 'react-native'
 
 import { lightColors, darkColors } from '../../theme/colors'
 import { spacing } from '../../theme/spacing'
-import { typography } from '../../theme/typography'
 import { useTheme } from '@/src/theme/ThemeProvider'
+
+import { normalize } from '@/src/utils/responsive'
 
 type Props = TextInputProps & {
   label: string
@@ -20,19 +20,18 @@ export default function Field({
   const colors = theme === 'dark' ? darkColors : lightColors
 
   return (
-    <View style={{ marginBottom: spacing.lg }}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>
-        {label}
+    <View style={styles.container}>
+      <Text style={[styles.label, { color: theme === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }]}>
+        {label.toUpperCase()}
       </Text>
 
       <TextInput
         {...inputProps}
-        placeholderTextColor={colors.textSecondary}
+        placeholderTextColor={theme === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'}
         style={[
           styles.input,
           {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
+            backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
             color: colors.textPrimary,
           },
           style,
@@ -43,15 +42,21 @@ export default function Field({
 }
 
 const styles = StyleSheet.create({
+  container: {
+    marginBottom: spacing.md,
+  },
   label: {
-    marginBottom: spacing.xs,
-    ...typography.label,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: normalize(10),
+    fontWeight: '700',
+    marginBottom: 8,
+    letterSpacing: 0.5,
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    ...typography.input,
+    height: 52,
+    borderRadius: 12, // Sharper
+    paddingHorizontal: 16,
+    fontSize: normalize(14),
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', // Technical input
   },
 })

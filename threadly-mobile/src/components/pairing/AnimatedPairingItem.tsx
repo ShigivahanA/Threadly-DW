@@ -22,24 +22,36 @@ export default function AnimatedPairingItem({
 }: Props) {
   const animatedStyle = useAnimatedStyle(() => {
     const centerOffset = index * (cardWidth + gap)
-    const distance = Math.abs(scrollX.value - centerOffset)
+    const distance = scrollX.value - centerOffset // Signed distance for rotation direction
+    const absDistance = Math.abs(distance)
 
     const scale = interpolate(
-      distance,
+      absDistance,
       [0, cardWidth + gap],
-      [1, 0.9],
+      [1, 0.85],
       Extrapolate.CLAMP
     )
 
     const opacity = interpolate(
-      distance,
+      absDistance,
       [0, cardWidth + gap],
-      [1, 0.5],
+      [1, 0.4],
+      Extrapolate.CLAMP
+    )
+
+    // Fan Effect: Rotate items away from center
+    const rotate = interpolate(
+      distance,
+      [-cardWidth - gap, 0, cardWidth + gap],
+      [-5, 0, 5],
       Extrapolate.CLAMP
     )
 
     return {
-      transform: [{ scale }],
+      transform: [
+        { scale },
+        { rotate: `${rotate}deg` }
+      ],
       opacity,
     }
   })

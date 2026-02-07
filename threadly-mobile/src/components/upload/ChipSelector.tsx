@@ -5,7 +5,7 @@ import { lightColors, darkColors } from '@/src/theme/colors'
 import { spacing } from '@/src/theme/spacing'
 
 type Props<T extends string> = {
-  value: T[]                 // ✅ array
+  value: T[]
   options: T[]
   onChange: (v: T) => void
 }
@@ -21,8 +21,7 @@ export default function ChipSelector<T extends string>({
   return (
     <View style={styles.wrap}>
       {options.map(option => {
-        const active = value.includes(option) // ✅ FIXED
-
+        const active = value.includes(option)
         return (
           <Pressable
             key={option}
@@ -30,30 +29,25 @@ export default function ChipSelector<T extends string>({
               await Haptics.selectionAsync()
               onChange(option)
             }}
-            style={[
+            style={({ pressed }) => [
               styles.chip,
               {
-                backgroundColor: active
-                  ? colors.textPrimary
-                  : colors.surface,
-                borderColor: active
-                  ? colors.textPrimary
-                  : colors.border,
-              },
+                backgroundColor: active ? colors.textPrimary : 'transparent',
+                borderColor: active ? colors.textPrimary : colors.border,
+                opacity: pressed ? 0.7 : 1,
+              }
             ]}
           >
             <Text
               style={[
                 styles.text,
                 {
-                  color: active
-                    ? colors.background
-                    : colors.textPrimary,
-                  fontWeight: active ? '600' : '400',
+                  color: active ? colors.background : colors.textSecondary,
+                  fontWeight: active ? '700' : '500',
                 },
               ]}
             >
-              {option}
+              {option.replace(/_/g, ' ').toUpperCase()}
             </Text>
           </Pressable>
         )
@@ -66,18 +60,17 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: 8,
   },
-
   chip: {
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 999,
+    borderRadius: 8, // Rectangular tag look
     borderWidth: 1,
   },
-
   text: {
-    fontSize: 13,
-    textTransform: 'capitalize',
+    fontSize: 10,
+    fontFamily: 'Courier',
+    letterSpacing: 0.5,
   },
 })

@@ -1,16 +1,25 @@
 import {
   createContext,
   useContext,
-  useRef,
   useState,
+  useCallback,
+  useRef,
+  useEffect
 } from 'react'
 import {
   View,
   Text,
   StyleSheet,
-  Animated,
+  Platform,
 } from 'react-native'
+import Animated, {
+  SlideInDown, // Changed from SlideInTop
+  SlideOutUp,   // Changed from SlideOutTop
+  Layout
+} from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
+import { BlurView } from 'expo-blur'
+import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { spacing } from '@/src/theme/spacing'
@@ -27,135 +36,139 @@ type ToastContextType = {
   ) => void
 }
 
-const ToastContext = createContext<ToastContextType | null>(
-  null
-)
+const ToastContext = createContext<ToastContextType | null>(null)
 
 export const useToast = () => {
   const ctx = useContext(ToastContext)
-  if (!ctx)
-    throw new Error(
-      'useToast must be used inside ToastProvider'
-    )
+  if (!ctx) throw new Error('useToast must be used inside ToastProvider')
   return ctx
 }
 
-export function ToastProvider({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export function ToastProvider({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets()
   const { theme } = useTheme()
-  const colors =
-    theme === 'dark' ? darkColors : lightColors
+  const colors = theme === 'dark' ? darkColors : lightColors
+  const [toast, setToast] = useState<{ message: string; type: ToastType; id: number } | null>(null)
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const translateY = useRef(new Animated.Value(-100))
-    .current
+  const show = useCallback((message: string, type: ToastType = 'info', duration = 3000) => {
+    if (timerRef.current) clearTimeout(timerRef.current as any)
 
-  const [toast, setToast] = useState<{
-    message: string
-    type: ToastType
-  } | null>(null)
+    // Haptic feedback based on type
+    if (type === 'error') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => { })
+    } else if (type === 'success') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { })
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { })
+    }
 
-  const show = (
-    message: string,
-    type: ToastType = 'info',
-    duration = 2500
-  ) => {
-    setToast({ message, type })
+    setToast({ message, type, id: Date.now() })
 
-    Animated.spring(translateY, {
-      toValue: 0,
-      useNativeDriver: true,
-    }).start()
-
-    setTimeout(() => {
-      Animated.timing(translateY, {
-        toValue: -100,
-        duration: 200,
-        useNativeDriver: true,
-      }).start(() => setToast(null))
-    }, duration)
-  }
+    timerRef.current = setTimeout(() => {
+      setToast(null)
+    }, duration) as any
+  }, [])
 
   const config = {
-    success: {
-      icon: 'checkmark-circle',
-      color: '#2ecc71',
-    },
-    error: {
-      icon: 'close-circle',
-      color: '#ff4d4f',
-    },
-    danger: {
-      icon: 'warning',
-      color: '#ff4d4f',
-    },
-    info: {
-      icon: 'information-circle',
-      color: '#3498db',
-    },
+    success: { icon: 'checkmark-circle' as const, color: '#4ade80' },
+    error: { icon: 'alert-circle' as const, color: '#f87171' },
+    danger: { icon: 'warning' as const, color: '#fb923c' },
+    info: { icon: 'information-circle' as const, color: '#60a5fa' },
   }
 
   return (
     <ToastContext.Provider value={{ show }}>
       {children}
 
-      {toast && (
-        <Animated.View
-          style={[
-            styles.toast,
-            {
-              top: insets.top + spacing.sm,
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-              transform: [{ translateY }],
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Ionicons
-            name={config[toast.type].icon as any}
-            size={18}
-            color={config[toast.type].color}
-          />
-          <Text
-            style={[
-              styles.text,
-              { color: colors.textPrimary },
-            ]}
+      <View
+        style={[
+          styles.container,
+          { top: insets.top + spacing.sm }
+        ]}
+        pointerEvents="box-none"
+      >
+        {toast && (
+          <Animated.View
+            key={toast.id}
+            entering={SlideInDown.duration(500)} // Changed from SlideInTop.springify().damping(20).mass(0.8)
+            exiting={SlideOutUp.duration(500)}   // Changed from SlideOutTop
+            layout={Layout.duration(300)}
+            style={styles.wrapper}
           >
-            {toast.message}
-          </Text>
-        </Animated.View>
-      )}
+            <BlurView
+              intensity={Platform.OS === 'ios' ? 70 : 80} // Higher intensity for better glass
+              tint={theme === 'dark' ? 'dark' : 'light'}
+              style={[
+                styles.toast,
+                {
+                  borderColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                  backgroundColor: theme === 'dark' ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.6)',
+                }
+              ]}
+            >
+              {/* Status Dot/Icon Area */}
+              <View style={[styles.iconContainer, { backgroundColor: config[toast.type].color + '20' }]}>
+                <Ionicons
+                  name={config[toast.type].icon}
+                  size={18}
+                  color={config[toast.type].color}
+                />
+              </View>
+
+              <Text style={[
+                styles.text,
+                { color: colors.textPrimary }
+              ]}>
+                {toast.message}
+              </Text>
+            </BlurView>
+          </Animated.View>
+        )}
+      </View>
     </ToastContext.Provider>
   )
 }
 
 const styles = StyleSheet.create({
-  toast: {
+  container: {
     position: 'absolute',
-    left: spacing.lg,
-    right: spacing.lg,
-    zIndex: 100,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wrapper: {
+    width: '90%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  toast: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 50, // Pill Shape
     borderWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
+    overflow: 'hidden', // Required for blur overflow
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   text: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     flex: 1,
+    letterSpacing: -0.2,
   },
 })

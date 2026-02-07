@@ -1,20 +1,22 @@
+import { normalize } from '../utils/responsive'
+
 export const typography = {
   title: {
-    fontSize: 26,
+    fontSize: normalize(26),
     fontWeight: '600' as const,
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: normalize(14),
   },
   label: {
-    fontSize: 13,
+    fontSize: normalize(13),
     fontWeight: '500' as const,
   },
   input: {
-    fontSize: 16,
+    fontSize: normalize(16),
   },
   button: {
-    fontSize: 16,
+    fontSize: normalize(16),
     fontWeight: '500' as const,
   },
 }

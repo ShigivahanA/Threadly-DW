@@ -3,10 +3,14 @@ import {
   Text,
   Pressable,
   StyleSheet,
+  Platform,
 } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
+import Animated, { FadeInUp } from 'react-native-reanimated'
+import { Ionicons } from '@expo/vector-icons'
+import { normalize } from '@/src/utils/responsive'
 
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { lightColors, darkColors } from '@/src/theme/colors'
@@ -32,49 +36,25 @@ export default function EmptyState({
       style={[
         styles.container,
         {
-          paddingBottom:
-            insets.bottom + TAB_BAR_HEIGHT,
+          paddingBottom: insets.bottom + TAB_BAR_HEIGHT,
         },
       ]}
     >
-      <View style={styles.content}>
+      <Animated.View entering={FadeInUp.duration(600)} style={styles.content}>
         {/* Visual anchor */}
-        <View
-          style={[
-            styles.iconWrap,
-            {
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <View
-            style={[
-              styles.icon,
-              {
-                borderColor: colors.textSecondary,
-              },
-            ]}
-          />
+        <View style={[styles.iconWrap, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+          <Ionicons name="cube-outline" size={32} color={colors.textSecondary} />
         </View>
 
         {/* Text */}
-        <Text
-          style={[
-            styles.title,
-            { color: colors.textPrimary },
-          ]}
-        >
-          Your wardrobe is empty
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
+          NO_ARTIFACTS_FOUND
         </Text>
 
-        <Text
-          style={[
-            styles.desc,
-            { color: colors.textSecondary },
-          ]}
-        >
-          This space is reserved for pieces you love.
-          Upload your first item or adjust filters to begin curating.
+        <Text style={[styles.desc, { color: colors.textSecondary }]}>
+          // THE_ARCHIVE_IS_EMPTY
+          {'\n'}
+          Initialize upload sequence to populate the database or recalibrate search parameters.
         </Text>
 
         {/* Actions */}
@@ -84,22 +64,18 @@ export default function EmptyState({
               onPress={() => {
                 Haptics.selectionAsync()
                 onReset()
-                toast.show('Filters cleared', 'info')
+                toast.show('Parameters reset', 'info')
               }}
-              style={[
+              style={({ pressed }) => [
                 styles.secondary,
                 {
                   borderColor: colors.border,
+                  backgroundColor: pressed ? colors.border : 'transparent',
                 },
               ]}
             >
-              <Text
-                style={[
-                  styles.secondaryText,
-                  { color: colors.textPrimary },
-                ]}
-              >
-                Clear filters
+              <Text style={[styles.secondaryText, { color: colors.textPrimary }]}>
+                RESET_FILTERS
               </Text>
             </Pressable>
           )}
@@ -109,22 +85,21 @@ export default function EmptyState({
               Haptics.selectionAsync()
               router.push('/upload')
             }}
-            style={[
+            style={({ pressed }) => [
               styles.primary,
-              { backgroundColor: colors.textPrimary },
+              {
+                backgroundColor: colors.textPrimary,
+                opacity: pressed ? 0.9 : 1,
+                transform: [{ scale: pressed ? 0.98 : 1 }]
+              },
             ]}
           >
-            <Text
-              style={[
-                styles.primaryText,
-                { color: colors.background },
-              ]}
-            >
-              Add your first item
+            <Text style={[styles.primaryText, { color: colors.background }]}>
+              INITIALIZE_UPLOAD
             </Text>
           </Pressable>
         </View>
-      </View>
+      </Animated.View>
     </View>
   )
 }
@@ -135,66 +110,69 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
   },
-
   content: {
     alignItems: 'center',
+    gap: 16,
   },
-
   iconWrap: {
-    marginBottom: spacing.lg,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    marginBottom: 8,
+    width: 80,
+    height: 80,
+    borderRadius: 24, // softer technical feel
     borderWidth: 1,
+    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  icon: {
-    width: 28,
-    height: 28,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-  },
-
   title: {
-    fontSize: 17,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-
-  desc: {
-    fontSize: 13,
+    fontSize: normalize(15),
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontWeight: '700',
+    letterSpacing: 1,
     textAlign: 'center',
-    maxWidth: 280,
   },
-
+  desc: {
+    fontSize: normalize(11),
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    color: '#666',
+    textAlign: 'center',
+    maxWidth: 240,
+    lineHeight: 18,
+    marginBottom: 16,
+  },
   actions: {
-    marginTop: spacing.lg,
-    gap: spacing.sm,
     width: '100%',
+    gap: 12,
+    maxWidth: 300,
   },
-
   secondary: {
     borderWidth: 1,
-    paddingVertical: 10,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-
   secondaryText: {
-    fontSize: 14,
+    fontSize: normalize(11),
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontWeight: '600',
+    letterSpacing: 1,
   },
-
   primary: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
-
   primaryText: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: normalize(11),
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontWeight: '700',
+    letterSpacing: 1,
   },
 })

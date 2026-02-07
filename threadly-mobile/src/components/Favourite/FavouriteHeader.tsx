@@ -1,8 +1,10 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { View, Text, StyleSheet, Pressable, Platform } from 'react-native'
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
+import Animated, { FadeInDown } from 'react-native-reanimated'
+import { normalize } from '@/src/utils/responsive'
 
 import { lightColors, darkColors } from '@/src/theme/colors'
 import { spacing } from '@/src/theme/spacing'
@@ -11,6 +13,8 @@ type Props = {
   count: number
   loading?: boolean
 }
+
+const MONO = Platform.OS === 'ios' ? 'Courier' : 'monospace'
 
 export default function FavouriteHeader({ count, loading }: Props) {
   const { theme } = useTheme()
@@ -23,66 +27,90 @@ export default function FavouriteHeader({ count, loading }: Props) {
   }
 
   return (
-    <View style={styles.wrap}>
-      {/* Top row */}
-      <View style={styles.row}>
+    <View style={styles.container}>
+      {/* Top Row: Back + Status */}
+      <View style={styles.topRow}>
         <Pressable
           onPress={goBack}
-          hitSlop={8}
-          style={styles.back}
+          hitSlop={15}
+          style={[styles.backBtn, { borderColor: colors.border }]}
         >
-          <Ionicons
-            name="chevron-back"
-            size={22}
-            color={colors.textPrimary}
-          />
+          <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
         </Pressable>
 
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          Favourites
-        </Text>
+        <View style={styles.statusBox}>
+          <View style={[styles.dot, { backgroundColor: '#ff4d4f' }]} />
+          <Text style={[styles.statusText, { color: colors.textSecondary }]}>SECURE_VAULT</Text>
+        </View>
       </View>
 
-      {/* Subtitle */}
-      <Text
-        style={[
-          styles.sub,
-          {
-            color: colors.textSecondary,
-            opacity: theme === 'dark' ? 0.9 : 0.75,
-          },
-        ]}
+      {/* Main Content */}
+      <Animated.Text
+        entering={FadeInDown.duration(600)}
+        style={[styles.title, { color: colors.textPrimary }]}
       >
-        {loading ? '—' : count} curated piece
-        {count !== 1 ? 's' : ''}
-      </Text>
+        FAVOURITES
+      </Animated.Text>
+
+      <Animated.Text
+        entering={FadeInDown.delay(100).duration(600)}
+        style={[styles.sub, { color: colors.textSecondary }]}
+      >
+        // {loading ? 'SYNCING_ARCHIVE...' : `DISPLAYING_${count}_CURATED_RECORDS`}
+      </Animated.Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    gap: 4,
+  container: {
+    paddingBottom: 8,
   },
-
-  row: {
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statusBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 77, 79, 0.2)',
+    backgroundColor: 'rgba(255, 77, 79, 0.05)',
   },
-
-  back: {
-    padding: 4, // 👈 IMPORTANT: no forced height
+  statusText: {
+    fontSize: normalize(8),
+    fontFamily: MONO,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
-
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+  },
   title: {
-    fontSize: 22,
-    fontWeight: '600',
-    letterSpacing: -0.3,
+    fontSize: normalize(32),
+    fontWeight: '900',
+    letterSpacing: -1.5,
   },
-
   sub: {
-    fontSize: 13,
-    marginLeft: 26, // aligns under text, not arrow
+    fontSize: normalize(10),
+    fontFamily: MONO,
+    fontWeight: '700',
+    marginTop: 4,
   },
 })

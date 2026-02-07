@@ -94,7 +94,7 @@ export function CategorySelector({ value, onSelect }: Props) {
 
   const normalizedQuery = query.trim().toLowerCase()
 
-    const orderedCategories = useMemo(() => {
+  const orderedCategories = useMemo(() => {
     if (!normalizedQuery) return sortedCategories
 
     const matches = sortedCategories.filter(c =>
@@ -227,8 +227,8 @@ export function CategorySelector({ value, onSelect }: Props) {
                       color: match
                         ? '#E53935' // 🔴 highlight match
                         : active
-                        ? colors.textPrimary
-                        : colors.textSecondary,
+                          ? colors.textPrimary
+                          : colors.textSecondary,
                       fontWeight: active || match ? '600' : '400',
                       textTransform: 'capitalize',
                     }}
@@ -250,18 +250,21 @@ export function CategorySelector({ value, onSelect }: Props) {
 ====================================================== */
 const styles = StyleSheet.create({
   field: {
-    height: 48,
+    height: 52, // Match Field.tsx
     borderWidth: 1,
     borderRadius: 12,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: spacing.md,
   },
 
   fieldText: {
     fontSize: 14,
-    textTransform: 'capitalize',
+    fontFamily: 'Courier',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
   container: {
@@ -273,26 +276,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
+    marginTop: spacing.sm,
   },
 
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 14,
+    fontFamily: 'Courier',
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 
   search: {
-    height: 44,
+    height: 48,
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.md,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: spacing.lg,
     fontSize: 14,
+    fontFamily: 'Courier',
   },
 
   option: {
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: spacing.sm,
-    borderRadius: 12,
+    borderRadius: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
 })

@@ -1,8 +1,10 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native'
 import { useRouter } from 'expo-router'
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
+import Animated, { FadeInDown } from 'react-native-reanimated'
+import { normalize } from '@/src/utils/responsive'
 
 import { lightColors, darkColors } from '@/src/theme/colors'
 import { spacing } from '@/src/theme/spacing'
@@ -12,6 +14,8 @@ type Props = {
   loading?: boolean
 }
 
+const MONO = Platform.OS === 'ios' ? 'Courier' : 'monospace'
+
 export default function OutfitHeader({ count, loading }: Props) {
   const router = useRouter()
   const { theme } = useTheme()
@@ -19,69 +23,84 @@ export default function OutfitHeader({ count, loading }: Props) {
 
   const goBack = async () => {
     await Haptics.selectionAsync()
-    router.replace('/(tabs)/profile')
+    router.back()
   }
 
   return (
     <View style={styles.container}>
-      {/* Top row */}
+      {/* Top Controls */}
       <View style={styles.topRow}>
-        <Pressable onPress={goBack} hitSlop={12} style={styles.back}>
-          <Ionicons
-            name="chevron-back"
-            size={22}
-            color={colors.textPrimary}
-          />
+        <Pressable
+          onPress={goBack}
+          hitSlop={15}
+          style={[styles.back, { borderColor: colors.border }]}
+        >
+          <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
         </Pressable>
 
-        <Text style={[styles.title, { color: colors.textPrimary }]}>
-          Saved Outfits
-        </Text>
+        <View style={[styles.statusTag, { borderColor: colors.border }]}>
+          <Text style={[styles.statusText, { color: colors.textSecondary }]}>SYNC: ACTIVE</Text>
+        </View>
       </View>
 
-      {/* Sub */}
-      <Text
-        style={[
-          styles.sub,
-          {
-            color: colors.textSecondary,
-            opacity: theme === 'dark' ? 0.85 : 0.7,
-          },
-        ]}
+      {/* Main Title */}
+      <Animated.Text
+        entering={FadeInDown.duration(600)}
+        style={[styles.title, { color: colors.textPrimary }]}
       >
-        {loading ? '—' : count} outfit{count !== 1 ? 's' : ''}
-      </Text>
+        OUTFITS
+      </Animated.Text>
+
+      {/* Sub-Technical Readout */}
+      <Animated.Text
+        entering={FadeInDown.delay(100).duration(600)}
+        style={[styles.sub, { color: colors.textSecondary }]}
+      >
+        // {loading ? 'FETCHING_COMPOSITIONS...' : `${count}_RECORDED_ASSEMBLIES`}
+      </Animated.Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: 4,
+    paddingBottom: 8,
   },
-
   topRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: spacing.sm,
+    marginBottom: 20,
   },
-
   back: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  title: {
-    fontSize: 22,
-    fontWeight: '600',
-    letterSpacing: -0.3,
+  statusTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderStyle: 'dashed',
   },
-
+  statusText: {
+    fontSize: normalize(8),
+    fontFamily: MONO,
+    fontWeight: '700',
+  },
+  title: {
+    fontSize: normalize(32),
+    fontWeight: '900',
+    letterSpacing: -1.5,
+  },
   sub: {
-    fontSize: 13,
-    marginLeft: 36 + spacing.sm, // aligns under title (not back button)
+    fontSize: normalize(10),
+    fontFamily: MONO,
+    fontWeight: '700',
+    marginTop: 4,
   },
 })

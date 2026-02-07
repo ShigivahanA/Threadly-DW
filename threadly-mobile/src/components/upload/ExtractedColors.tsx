@@ -1,7 +1,8 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Pressable, StyleSheet } from 'react-native'
 import { spacing } from '@/src/theme/spacing'
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { lightColors, darkColors } from '@/src/theme/colors'
+import { Ionicons } from '@expo/vector-icons'
 
 type Props = {
   colors: string[]
@@ -16,101 +17,68 @@ export default function ExtractedColors({
 }: Props) {
   const { theme } = useTheme()
   const palette = theme === 'dark' ? darkColors : lightColors
-  const isDark = theme === 'dark'
-
-  if (colors.length === 0) return null
 
   return (
-    <View style={styles.wrap}>
-      <Text style={[styles.label, { color: palette.textSecondary }]}>
-        Colors
-      </Text>
+    <View style={styles.grid}>
 
-      <View style={styles.row}>
-        {colors.map((c) => (
-          <View key={c} style={styles.chipWrap}>
-            {/* Color circle */}
-            <View
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: c,
-                  borderColor: palette.border,
-                },
-              ]}
-            />
+      {/* Extracted Chips */}
+      {colors.map((c) => (
+        <View key={c} style={styles.chipWrap}>
+          <View style={[styles.chip, { backgroundColor: c, borderColor: palette.border }]} />
+          <Pressable
+            onPress={() => onRemove(c)}
+            hitSlop={8}
+            style={[styles.removeBtn, { backgroundColor: palette.surface, borderColor: palette.border }]}
+          >
+            <Ionicons name="close" size={10} color={palette.textPrimary} />
+          </Pressable>
+        </View>
+      ))}
 
-            {/* Remove button */}
-            <Pressable
-              onPress={() => onRemove(c)}
-              hitSlop={8}
-              style={[
-                styles.removeBtn,
-                {
-                  backgroundColor: isDark
-                    ? palette.surface
-                    : palette.textPrimary,
-                },
-              ]}
-            >
-              <Text
-                style={{
-                  color: isDark
-                    ? palette.textPrimary
-                    : palette.background,
-                  fontSize: 12,
-                  fontWeight: '700',
-                }}
-              >
-                ×
-              </Text>
-            </Pressable>
-          </View>
-        ))}
-      </View>
-
-<Pressable onPress={onManualPick}>
-  <Text
-    style={[
-      styles.manual,
-      { color: palette.textSecondary },
-    ]}
-  >
-    Pick colors manually
-  </Text>
-</Pressable>
+      {/* Add Button as a Chip */}
+      <Pressable
+        onPress={onManualPick}
+        style={({ pressed }) => [
+          styles.addChip,
+          {
+            borderColor: palette.border,
+            backgroundColor: pressed ? palette.border : 'transparent'
+          }
+        ]}
+      >
+        <Ionicons name="add" size={20} color={palette.textSecondary} />
+      </Pressable>
 
     </View>
   )
 }
+
 const styles = StyleSheet.create({
-  wrap: {
-    gap: spacing.sm,
-  },
-
-  label: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-
-  row: {
+  grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
   },
-
   chipWrap: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
+    position: 'relative',
   },
-
   chip: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
     borderWidth: 1,
   },
-
+  addChip: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   removeBtn: {
     position: 'absolute',
     top: -6,
@@ -120,18 +88,11 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-
-    // subtle depth
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
-  },
-
-  manual: {
-    fontSize: 13,
-    marginTop: spacing.xs,
-    textDecorationLine: 'underline',
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 2,
   },
 })

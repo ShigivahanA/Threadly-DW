@@ -1,162 +1,170 @@
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { Image } from 'expo-image'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
+import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+
 import { spacing } from '@/src/theme/spacing'
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { lightColors, darkColors } from '@/src/theme/colors'
+
+import { normalize } from '@/src/utils/responsive'
 
 export default function WardrobeCard({
   item,
   width,
   onToggleFavorite,
+  index = 0, // for staggered anim
 }: {
   item: any
   width: number
   onToggleFavorite: (id: string) => void
+  index?: number
 }) {
   const router = useRouter()
   const { theme } = useTheme()
   const colors = theme === 'dark' ? darkColors : lightColors
 
+  const scale = useSharedValue(1)
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }))
+
+  const handlePress = () => {
+    Haptics.selectionAsync()
+    router.push(`/(tabs)/wardrobe/${item._id}`)
+  }
+
+  const handleFav = (e: any) => {
+    e.stopPropagation()
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    onToggleFavorite(item._id)
+  }
+
   return (
-    <Pressable
-      onPress={() =>
-        router.push(`/(tabs)/wardrobe/${item._id}`)
-      }
-      style={[
-        styles.card,
-        {
-          width,
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-        },
-      ]}
+    <Animated.View
+      entering={FadeInDown.delay(index * 50).duration(500)}
+      style={{ width, marginBottom: 16 }}
     >
-      {/* ❤️ Favorite (isolated press) */}
       <Pressable
-        onPress={(e) => {
-          e.stopPropagation() // 👈 CRITICAL
-          onToggleFavorite(item._id)
-        }}
-        style={[
-          styles.favorite,
-          {
-            backgroundColor: colors.background,
-            borderColor: colors.border,
-          },
-        ]}
+        onPress={handlePress}
+        onPressIn={() => scale.value = withTiming(0.97, { duration: 150 })}
+        onPressOut={() => scale.value = withTiming(1, { duration: 150 })}
+        style={[styles.card, { backgroundColor: colors.surface }]}
       >
-        <Ionicons
-          name={item.isFavorite ? 'heart' : 'heart-outline'}
-          size={16}
-          color={
-            item.isFavorite
-              ? colors.danger
-              : colors.textSecondary
-          }
-        />
-      </Pressable>
+        <Animated.View style={[styles.inner, animatedStyle]}>
+          {/* Image */}
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={styles.image}
+            contentFit="cover"
+            transition={300}
+          />
 
-      {/* Image */}
-      <Image source={{ uri: item.imageUrl }} style={styles.image} />
+          {/* Gradient Overlay */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.6)']}
+            style={styles.gradient}
+          />
 
-      {/* Meta */}
-      <View style={styles.meta}>
-        <View style={styles.row}>
-          <Text
-            style={[
-              styles.category,
-              { color: colors.textSecondary },
-            ]}
-          >
-            {item.category}
-          </Text>
+          {/* Favorite Button */}
+          <Pressable onPress={handleFav} style={styles.favBtn} hitSlop={10}>
+            <Ionicons
+              name={item.isFavorite ? 'heart' : 'heart-outline'}
+              size={20}
+              color={item.isFavorite ? '#ff4d4f' : '#fff'}
+            />
+          </Pressable>
 
-          {item.size && (
-            <Text
-              style={[
-                styles.size,
-                { color: colors.textSecondary },
-              ]}
-            >
-              {item.size}
-            </Text>
-          )}
-        </View>
-
-        {item.colors?.length > 0 && (
-          <View style={styles.colors}>
-            {item.colors.slice(0, 4).map((c: string) => (
-              <View
-                key={c}
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: c,
-                    borderColor: colors.border,
-                  },
-                ]}
-              />
-            ))}
+          {/* Meta Data */}
+          <View style={styles.meta}>
+            <Text style={styles.category}>{item.category || 'ITEM'}</Text>
+            {item.brand && <Text style={styles.brand}>{item.brand}</Text>}
           </View>
-        )}
-      </View>
-    </Pressable>
+
+          {/* Colors (Mini Dots) */}
+          {item.colors?.length > 0 && (
+            <View style={styles.colors}>
+              {item.colors.slice(0, 3).map((c: string, i: number) => (
+                <View key={i} style={[styles.dot, { backgroundColor: c }]} />
+              ))}
+            </View>
+          )}
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
   )
 }
 
-
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 12,
+    aspectRatio: 3 / 4, // Taller portrait look
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  inner: {
+    flex: 1,
+    borderRadius: 12,
     overflow: 'hidden',
+    position: 'relative',
   },
-
-  favorite: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    zIndex: 10,
-    borderRadius: 999,
-    padding: 6,
-    borderWidth: 1,
-  },
-
   image: {
     width: '100%',
-    aspectRatio: 1,
+    height: '100%',
   },
-
+  gradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '40%',
+  },
+  favBtn: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   meta: {
-    padding: spacing.sm,
-    gap: 6,
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
   },
-
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
   category: {
-    fontSize: 11,
+    color: '#fff',
+    fontSize: normalize(10),
+    fontWeight: '700',
     textTransform: 'uppercase',
-    fontWeight: '500',
+    letterSpacing: 0.5,
   },
-
-  size: {
-    fontSize: 11,
+  brand: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: normalize(9),
+    marginTop: 2,
   },
-
   colors: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
     flexDirection: 'row',
-    gap: 6,
+    gap: 4,
   },
-
   dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
   },
 })

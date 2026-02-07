@@ -11,6 +11,7 @@ import type {
   WardrobeOccasion,
   WardrobeSeason,
 } from '../../services/wardrobeService'
+import { normalize } from '@/src/utils/responsive'
 
 /* ======================================================
    Constants (MUST MATCH BACKEND ENUMS EXACTLY)
@@ -96,8 +97,8 @@ export default function MetadataForm({ meta, setMeta }: Props) {
 
     setMeta({
       ...meta,
-      [key]: meta[key].includes(value)
-        ? meta[key].filter(v => v !== value)
+      [key]: (meta[key] as string[]).includes(value)
+        ? (meta[key] as string[]).filter(v => v !== value)
         : [...meta[key], value],
     })
   }
@@ -213,7 +214,7 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: 13,
+    fontSize: normalize(12),
     fontWeight: '500',
     marginBottom: 4,
   },

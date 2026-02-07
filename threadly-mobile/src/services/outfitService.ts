@@ -19,6 +19,7 @@ export type Outfit = {
     footwear: OutfitItemRef
   }
   occasion?: string
+  notes?: string
   wearCount: number
   createdAt: string
 }
@@ -37,6 +38,7 @@ const createOutfit = async (payload: {
     footwear: string
   }
   occasion?: string
+  notes?: string
 }): Promise<Outfit> => {
   return request<Outfit>('/outfits', {
     method: 'POST',

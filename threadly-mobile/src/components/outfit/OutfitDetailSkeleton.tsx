@@ -1,63 +1,128 @@
-// src/components/outfit/OutfitDetailSkeleton.tsx
-import { View, StyleSheet } from 'react-native'
+import { View, StyleSheet, Dimensions } from 'react-native'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  Easing
+} from 'react-native-reanimated'
+import { useEffect } from 'react'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTheme } from '@/src/theme/ThemeProvider'
 import { spacing } from '@/src/theme/spacing'
 
-export default function OutfitDetailSkeleton() {
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
+const CARD_WIDTH = SCREEN_WIDTH * 0.6
+
+const SkeletonElement = ({ style, theme }: any) => {
+  const opacity = useSharedValue(0.3)
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withTiming(0.6, { duration: 1000, easing: Easing.inOut(Easing.quad) }),
+      -1,
+      true
+    )
+  }, [])
+  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }))
   return (
-    <View style={styles.wrap}>
-      <View style={styles.title} />
+    <Animated.View style={[
+      style,
+      { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' },
+      animatedStyle
+    ]} />
+  )
+}
 
-      {[1, 2, 3].map((i) => (
-        <View key={i} style={styles.card} />
-      ))}
+export default function OutfitDetailSkeleton() {
+  const { theme } = useTheme()
+  const insets = useSafeAreaInsets()
 
-      <View style={styles.stat} />
-      <View style={styles.subStat} />
+  return (
+    <View style={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
+      {/* Header Mock */}
+      <View style={styles.header}>
+        <View />
+        <View style={{ alignItems: 'center', gap: 6 }}>
+          <SkeletonElement theme={theme} style={{ width: 100, height: 24, borderRadius: 4 }} />
+          <SkeletonElement theme={theme} style={{ width: 60, height: 12, borderRadius: 2 }} />
+        </View>
+        <View />
+      </View>
 
-      <View style={styles.button} />
+      {/* Blueprint Stage Mock */}
+      <View style={styles.stage}>
+        {/* Thread Line */}
+        <View style={[styles.threadLine, { borderColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]} />
+
+        {/* Staggered Items */}
+        <View style={{ alignSelf: 'flex-start', marginLeft: spacing.lg }}>
+          <SkeletonElement theme={theme} style={styles.card} />
+        </View>
+
+        <View style={{ alignSelf: 'flex-end', marginRight: spacing.lg, marginTop: -40 }}>
+          <SkeletonElement theme={theme} style={styles.card} />
+        </View>
+
+        <View style={{ alignSelf: 'center', marginTop: -40 }}>
+          <SkeletonElement theme={theme} style={styles.card} />
+        </View>
+      </View>
+
+      {/* Specs Mock */}
+      <View style={[styles.specs, { borderColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+        {[1, 2, 3].map(i => (
+          <View key={i} style={styles.specRow}>
+            <SkeletonElement theme={theme} style={{ width: 60, height: 10, borderRadius: 2 }} />
+            <SkeletonElement theme={theme} style={{ width: 120, height: 14, borderRadius: 2 }} />
+          </View>
+        ))}
+
+        <SkeletonElement theme={theme} style={styles.button} />
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    padding: spacing.xl,
-    gap: spacing.lg,
+  container: {
+    flex: 1,
   },
-
-  title: {
-    height: 22,
-    width: 140,
-    alignSelf: 'center',
-    borderRadius: 8,
-    backgroundColor: '#e5e7eb',
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: spacing.xl,
+    marginBottom: 40,
   },
-
+  stage: {
+    position: 'relative',
+    marginBottom: 40,
+  },
+  threadLine: {
+    position: 'absolute',
+    left: '50%',
+    top: 0,
+    bottom: 0,
+    borderLeftWidth: 1,
+    borderStyle: 'dashed',
+  },
   card: {
-    aspectRatio: 4 / 5,
+    width: CARD_WIDTH,
+    aspectRatio: 3 / 4,
     borderRadius: 20,
-    backgroundColor: '#e5e7eb',
   },
-
-  stat: {
-    height: 14,
-    width: 120,
-    alignSelf: 'center',
-    borderRadius: 6,
-    backgroundColor: '#e5e7eb',
+  specs: {
+    marginHorizontal: spacing.xl,
+    padding: spacing.xl,
+    borderRadius: 24,
+    borderWidth: 1,
+    gap: 20,
   },
-
-  subStat: {
-    height: 12,
-    width: 160,
-    alignSelf: 'center',
-    borderRadius: 6,
-    backgroundColor: '#e5e7eb',
+  specRow: {
+    gap: 8,
   },
-
   button: {
     height: 52,
     borderRadius: 14,
-    backgroundColor: '#d1d5db',
-  },
+    marginTop: 12,
+  }
 })
