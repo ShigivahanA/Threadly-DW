@@ -23,7 +23,7 @@ import wardrobeService from '@/src/services/wardrobeService'
 import outfitService from '@/src/services/outfitService'
 import { logout } from '@/src/services/authService'
 import { useToast } from '@/src/components/Toast/ToastProvider'
-
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { useTheme } from '@/src/theme/ThemeProvider'
 import { lightColors, darkColors } from '@/src/theme/colors'
 import { spacing } from '@/src/theme/spacing'
@@ -215,12 +215,14 @@ export default function Profile() {
     { title: "About", icon: "information-circle-outline", route: "/(tabs)/profile/about" },
   ]
 
+  const tabBarHeight = useBottomTabBarHeight()
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + 20,
-          paddingBottom: 100,
+          paddingBottom: insets.bottom + tabBarHeight + 20,
           paddingHorizontal: spacing.xl
         }}
         showsVerticalScrollIndicator={false}

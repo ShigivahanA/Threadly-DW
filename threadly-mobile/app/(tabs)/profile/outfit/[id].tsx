@@ -43,9 +43,10 @@ export default function OutfitDetailScreen() {
   useEffect(() => {
     if (!id) return
     outfitService.getOutfitById(id)
-      .then((res) => {
-        if (!res) throw new Error('No outfit')
-        setOutfit(res)
+      .then((res: any) => {
+        const data = res?.data || res
+        if (!data) throw new Error('No outfit')
+        setOutfit(data)
       })
       .catch(() => {
         toast.show('Outfit record lost', 'error')
